@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.10 2000/02/28 23:23:52 eserte Exp $
+# $Id: XMLViewer.pm,v 1.11 2000/07/25 18:58:46 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
@@ -89,7 +89,9 @@ sub insertXML {
 			     -foreground => '#ffffff',
 			    );
 	    $w->see("end");
-	    $w->insert("end", "ERROR", "ERROR", $xmlstring);
+	    (my $err = $@) =~ s/(byte\s+\d+)\s*at\s*.*line\s*\d+/$1/;
+	    $w->insert("end", "ERROR $err", "ERROR",
+		       _convert_from_unicode($xmlstring));
 	} else {
 	    die "Error while parsing XML: $@";
 	}
@@ -125,7 +127,7 @@ sub _flush {
 sub StartTag {
     $curr_w->_flush;
     my $start = $curr_w->index("end - 1 chars");
-    $curr_w->insert("end", "<$_[1]", 'xml_tag');
+    $curr_w->insert("end", "<" . _convert_from_unicode($_[1]), 'xml_tag');
     if (%_) {
 	$curr_w->insert("end", " ");
 	my $need_space = 0;
@@ -136,9 +138,9 @@ sub StartTag {
 		$need_space++;
 	    }
 	    $curr_w->insert("end",
-			    $k, "xml_attrkey",
+			    _convert_from_unicode($k), "xml_attrkey",
 			    "='", "",
-			    $v, "xml_attrval",
+			    _convert_from_unicode($v), "xml_attrval",
 			    "'", "");
 	}
     }
@@ -154,7 +156,7 @@ sub Text {
     s/\s+$//;
     if ($_ ne "") {
 	$curr_w->insert("end",
-			$_ . "\n",
+			_convert_from_unicode($_) . "\n",
 			$curr_w->_indenttag);
     }
 }
@@ -170,7 +172,8 @@ sub EndTag {
 	my $tag_start    = $curr_w->index('tagstart' . $curr_w->{Indent});
 	my $region_end   = $curr_w->index("end");
 	my $start = $curr_w->index("end - 1 chars");
-	$curr_w->insert("end", "</$_[1]>", 'xml_tag');
+	$curr_w->insert("end", "</" . _convert_from_unicode($_[1]) .">",
+			'xml_tag');
 	$curr_w->tagAdd($curr_w->_indenttag, $start, "end");
 	my $region_count = $curr_w->{RegionCount};
 	$curr_w->tagAdd("region" . $region_count,
@@ -307,6 +310,20 @@ sub XMLMenu {
     }
 }
 
+if ($] >= 5.006) {
+    # unicode translator available
+    eval <<'EOF';
+sub _convert_from_unicode {
+    $_[0] =~ tr/\0-\x{FF}//UC;
+    $_[0];
+}
+EOF
+} else {
+    # do nothing
+    eval <<'EOF';
+sub _convert_from_unicode { $_[0] }
+EOF
+}
 
 1;
 __END__
@@ -351,7 +368,9 @@ Tk::Text widgets and the method for XMLViewer widgets.
 
 =head1 BUGS
 
-Unicode is not handled.
+Unicode is not handled at all for perl before 5.6.0. For recent perls,
+unicode characters are translated to ISO-8859-1 --- Perl/Tk does not
+support Unicode, yet.
 
 DumpXML will not work with nested text tags.
 
