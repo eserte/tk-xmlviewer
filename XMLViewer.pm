@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.17 2000/08/20 20:22:41 eserte Exp $
+# $Id: XMLViewer.pm,v 1.18 2000/08/20 20:43:15 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -375,7 +375,7 @@ warn $tag;
     }
 
     # find end
-    my(@tags) = $w->tagNames("sel.last");
+    @tags = $w->tagNames("sel.last");
 warn "@tags";
     foreach my $tag (@tags) {
 warn $tag;
@@ -456,7 +456,7 @@ sub Showinfo {
     require Tk::DialogBox;
     my $d = $w->DialogBox(-title => "XMLView: Info", -buttons => ["OK"]);
     my $textbox = $d->add("Scrolled", qw/ROText -wrap none -width 60
-			  -height 5 -scrollbars ose -background white/);
+			  -height 5 -scrollbars osw -background white/);
     $textbox->pack(qw/-side left -expand yes -fill both/);
     if (keys %xmlinfo) {
 	my $message = "XMLDecl: " ;
@@ -548,6 +548,8 @@ Viewing of large XML files is slow.
 =head1 AUTHOR
 
 Slaven Rezic, <eserte@cs.tu-berlin.de>
+
+Some additions by Jerry Geiger <jgeiger@rios.de>.
 
 =head1 SEE ALSO
 
