@@ -2,15 +2,15 @@
 # -*- perl -*-
 
 #
-# $Id: tkxmlview,v 1.12 2003/08/01 12:58:37 eserte Exp $
+# $Id: tkxmlview,v 1.13 2004/03/20 18:57:59 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2000, 2003 Slaven Rezic. All rights reserved.
+# Copyright (C) 2000, 2003, 2004 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
-# Mail: slaven@rezic.de
-# WWW:  http://www.rezic.de/eserte
+# Mail: srezic@cpan.org
+# WWW:  http://www.sourceforge.net/projects/srezic
 #
 
 use Tk;
@@ -21,11 +21,13 @@ use strict;
 my $indent;
 my $mainbg;
 my $ua;
+my $do_loaddtd;
 
 my $top = new MainWindow;
 
 GetOptions("indent=i" => \$indent,
 	   "mainbg=s" => \$mainbg,
+	   "loaddtd!" => \$do_loaddtd,
 	  );
 
 my $string;
@@ -188,7 +190,9 @@ sub viewxml {
 	}
 	$top->title("XMLView: ".$fname);
 	$xmlviewer->delete("1.0", "end");
-	$xmlviewer->insertXML(-file => $file);
+	$xmlviewer->insertXML(-file => $file,
+			      _add_insertxml_param(),
+			     );
     }
 }
 
@@ -211,9 +215,58 @@ sub openandviewurl {
 
     $top->title("XMLView: ".$url);
     $xmlviewer->delete("1.0", "end");
-    $xmlviewer->insertXML(-text => $resp->content);
+    $xmlviewer->insertXML(-text => $resp->content,
+			  _add_insertxml_param(),
+			 );
 
     1;
 }
 
+sub _add_insertxml_param {
+    (-xmlparserargs => { ParseParamEnt => $do_loaddtd });
+}
+
 __END__
+
+=head1 NAME
+
+tkxmlview - a simple Tk based XML viewer
+
+=head1 SYNOPSIS
+
+    tkxmlview [-indent amount] [-mainbg color] [-loaddtd] file_or_url
+
+=head1 DESCRIPTION
+
+B<tkxmlview> displays the XML from the specified file or URL as a tree.
+
+=head2 OPTIONS
+
+=over
+
+=item B<-indent> I<amount>
+
+Set the indentation width in pixels. The default is taken from
+L<Tk::XMLViewer>.
+
+=item B<-mainbg> I<color>
+
+Set the background color of the main window. The I<color> is any valid
+Tk color name.
+
+=item B<-loaddtd>
+
+Causes tkxmlview to load any external DTD specified in the XML file.
+
+=back
+
+=head1 AUTHOR
+
+Slaven Rezic
+
+=head1 SEE ALSO
+
+L<Tk::XMLViewer>.
+
+=cut
+
