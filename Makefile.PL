@@ -24,8 +24,9 @@ EOF
 
     if (defined $ENV{USER} && $ENV{USER} eq 'eserte') {
 	$postamble .= <<'EOF';
-release :: dist
-	cpan-upload $(DISTVNAME).tar$(SUFFIX)
+
+.include "../../perl.release.mk"
+.include "../../perl.cvs.mk"
 
 EOF
     }
