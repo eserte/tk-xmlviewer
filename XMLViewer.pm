@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.12 2000/07/29 00:27:46 eserte Exp $
+# $Id: XMLViewer.pm,v 1.13 2000/07/29 01:17:05 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -183,10 +183,9 @@ sub EndTag {
 
  	$curr_w->imageCreate("$tag_start",
  			     -image => $curr_w->{'MinusImage'});
- 	$curr_w->tagAdd("plus" . $region_count,
- 			$tag_start);
- 	$curr_w->tagAdd($curr_w->_indenttag,
- 			$tag_start);
+	$curr_w->tagAdd("plus", $tag_start);
+ 	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
+ 	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
  	$curr_w->tagBind("plus" . $region_count,
  			 '<1>' => [$curr_w, 'ShowHideRegion', $region_count]);
  	$curr_w->tagBind("plus" . $region_count,
@@ -294,6 +293,54 @@ sub ShowToDepth {
     }
 }
 
+sub CloseSelectedRegion {
+    my $w = shift;
+    return unless $w->tagRanges("sel");
+
+    my $begin_region;
+    my $end_region;
+
+    # find beginning
+    while(1) {
+	my($t1,$t2) = $w->tagPrevrange("plus", $w->index("sel.first"));
+	if (!defined $t1) {
+	    $begin_region = 0;
+	    last;
+	}
+	my(@tags) = $w->tagNames($t1);
+	foreach my $tag (@tags) {
+	    if ($tag =~ /^plus(\d+)/) {
+		$begin_region = $1;
+		last;
+	    }
+	}
+	last; #XXX
+    }
+
+    # find end
+    while(1) {
+	my($t1,$t2) = $w->tagNextrange("plus", $w->index("sel.last"));
+	if (!defined $t1) {
+	    $end_region = $w->{RegionCount}-1;
+	    last;
+	}
+	my(@tags) = $w->tagNames($t1);
+	foreach my $tag (@tags) {
+	    if ($tag =~ /^plus(\d+)/) {
+		$end_region = $1-1;
+		last;
+	    }
+	}
+	last; #XXX
+    }
+
+    if (defined $begin_region and defined $end_region) {
+	for my $region ($begin_region .. $end_region) {
+	    $w->ShowHideRegion($region, -open => 0);
+	}
+    }
+}
+
 sub XMLMenu {
     my $w = shift;
     if ($Tk::VERSION >= 800.015) {
@@ -309,6 +356,8 @@ sub XMLMenu {
 	}
 	$depthmenu->command(-label => "Open all",
 			    -command => sub { $w->ShowToDepth(undef) });
+	$xmlmenu->command(-label => "Close selected region",
+			  -command => sub { $w->CloseSelectedRegion });
     }
 }
 
@@ -384,6 +433,12 @@ probably only an issue with threaded operations, which do not work in
 Perl/Tk anyway).
 
 Viewing of large XML files is slow.
+
+=head1 TODO
+
+ - show to depth n: close everything from depth n+1
+ - create menu item "close selected region"
+ - DTD validation (is this possible with XML::Parser?)
 
 =head1 AUTHOR
 
