@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.11 2000/07/25 18:58:46 eserte Exp $
+# $Id: XMLViewer.pm,v 1.12 2000/07/29 00:27:46 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -63,8 +63,10 @@ sub insertXML {
     eval {
 	if ($args{-file}) {
 	    $p1->parsefile($args{-file});
+	    $w->{Source} = ['file', $args{-file}];
 	} elsif (exists $args{-text}) {
 	    $p1->parse($args{-text});
+	    $w->{Source} = ['text', $args{-text}];
 	} else {
 	    die "-text or -file argument missing";
 	}
@@ -262,7 +264,7 @@ sub OpenCloseDepth {
     my($begin, $end) = ("1.0");
     while(1) {
 	($begin, $end) = $w->tagNextrange('xml_indent' . $depth, $begin);
-warn "$begin $end<" if $depth == 2;
+#warn "$begin $end<" if $depth == 2;
 	last if !defined $begin || $begin eq '';
 	my(@tags) = $w->tagNames($begin);
 	my $region;
@@ -272,7 +274,7 @@ warn "$begin $end<" if $depth == 2;
 		last;
 	    }
 	}
-warn "region=$region" if $depth==2;
+#warn "region=$region" if $depth==2;
 	if (defined $region) {
 	    $w->ShowHideRegion($region, -open => $open);
 	}
@@ -282,12 +284,12 @@ warn "region=$region" if $depth==2;
 
 sub ShowToDepth {
     my($w, $depth) = @_;
-warn "Close Depth $depth";
+#warn "Close Depth $depth";
     $depth--;
     $w->OpenCloseDepth($depth, 0);
     while ($depth > 0) {
 	$depth--;
-warn "Open Depth $depth";
+#warn "Open Depth $depth";
 	$w->OpenCloseDepth($depth, 1);
     }
 }
@@ -324,6 +326,9 @@ EOF
 sub _convert_from_unicode { $_[0] }
 EOF
 }
+
+sub SourceType    { $_[0]->{Source} && $_[0]->{Source}[0] }
+sub SourceContent { $_[0]->{Source} && $_[0]->{Source}[1] }
 
 1;
 __END__
