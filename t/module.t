@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $^W = 1; $| = 1; print "1..5\n"; }
+BEGIN { $^W = 1; $| = 1; print "1..9\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Tk;
 use Tk::XMLViewer;
@@ -59,6 +59,12 @@ if (!defined &Tk::XMLViewer::_convert_from_unicode) {
     print "not ";
 }
 print "ok " . $ok++ . "\n";
+
+my %info = %{ $xmlwidget->GetInfo };
+if ($info{Version} ne "1.0")         { print "not " } print "ok ". $ok++ ."\n";
+if ($info{Encoding} ne "ISO-8859-1") { print "not " } print "ok ". $ok++ ."\n";
+if ($info{Name} ne "ecollateral")    { print "not " } print "ok ". $ok++ ."\n";
+if ($info{Sysid} ne "test.dtd")      { print "not " } print "ok ". $ok++ ."\n";
 
 # definitions for interactive use...
 
