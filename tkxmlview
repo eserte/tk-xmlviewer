@@ -1,0 +1,47 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: tkxmlview,v 1.1 2000/01/19 16:26:39 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2000 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: eserte@cs.tu-berlin.de
+# WWW:  http://user.cs.tu-berlin.de/~eserte/
+#
+
+use Tk;
+use Tk::XMLViewer;
+$top = new MainWindow;
+my $file = shift;
+$xmlviewer = $top->Scrolled("XMLViewer")->pack(-expand => 1, -fill => "both");
+if ($Tk::VERSION >= 800.015) {
+    my $textmenu = $xmlviewer->GetMenu;
+    if ($textmenu) {
+	my $filemenu = $textmenu->entrycget(0, -menu);
+	$filemenu->command(-label => 'Open',
+			   -command => sub { openxml(); viewxml() });
+    }
+}
+if (!defined $file) {
+    openxml();
+}
+viewxml();
+MainLoop;
+
+sub openxml {
+    $file = $top->getOpenFile(-filetypes => [['XML Files', '*.xml'],
+					     ['All Files', '*']]);
+}
+sub viewxml {
+    if (defined $file) {
+	$top->title($file);
+	$xmlviewer->delete("1.0", "end");
+	$xmlviewer->insertXML(-file => $file);
+    }
+}
+
+__END__
