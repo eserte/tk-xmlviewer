@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.14 2000/08/20 19:58:51 eserte Exp $
+# $Id: XMLViewer.pm,v 1.15 2000/08/20 20:02:39 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,10 +25,17 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
+my %xmlinfo;
+
+sub SetIndent {
+  my $w = shift;
+  my $arg = shift;
+  $indent_width = $arg;
+}
 
 sub InitObject {
     my($w,$args) = @_;
@@ -45,6 +52,9 @@ sub InitObject {
     $w->tagConfigure('xml_attrval',
 		     -foreground => 'DarkGreen',
 		     );
+    $w->tagConfigure('xml_comment',
+		     -foreground => 'gold2',
+		     );
     $w->{IndentTags}  = [];
     $w->{RegionCount} = 0;
 
@@ -55,8 +65,12 @@ sub InitObject {
 
 sub insertXML {
     my $w = shift;
+    $w->Busy();
     my(%args) = @_;
-    my $p1 = new XML::Parser(Style => "Stream");
+    my $p1 = new XML::Parser(Style => "Stream", Handlers => {
+                                        Comment => \&hComment,
+                                        XMLDecl => \&hDecl,
+                                        Doctype => \&hDoctype});
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
@@ -100,6 +114,20 @@ sub insertXML {
     } else {
 	$w->_flush;
     }
+    $w->Unbusy();
+}
+
+sub hDoctype {
+  my $exp = shift;
+  foreach my $i (qw(Name Sysid Pubid Internal)) {
+    $xmlinfo{$i} = shift;
+  }
+}
+sub hDecl {
+  my $exp = shift;
+  foreach my $i (qw(Version Encoding Standalone)) {
+    $xmlinfo{$i} = shift;
+  }
 }
 
 sub _indenttag {
@@ -141,9 +169,9 @@ sub StartTag {
 	    }
 	    $curr_w->insert("end",
 			    _convert_from_unicode($k), "xml_attrkey",
-			    "='", "",
+			    "=\"", "",
 			    _convert_from_unicode($v), "xml_attrval",
-			    "'", "");
+			    "\"", "");
 	}
     }
     $curr_w->tagAdd($curr_w->_indenttag, $start, "end");
@@ -161,6 +189,33 @@ sub Text {
 			_convert_from_unicode($_) . "\n",
 			$curr_w->_indenttag);
     }
+}
+sub hComment {
+  $curr_w->_flush;
+  $_ = $_[1];
+  s/^\s+//; s/\s+$//;
+  if ($_ ne "") {
+	  my $tag_start = $curr_w->index("end - 1 chars");
+    $curr_w->insert("end", "<!-- \n", "xml_comment");
+	  my $region_start = $curr_w->index("end - 1 chars");
+    $curr_w->insert("end", 
+        _convert_from_unicode($_) . " -->\n", "xml_comment");
+	  my $region_end   = $curr_w->index("end");
+	  my $region_count = $curr_w->{RegionCount};
+	  $curr_w->tagAdd("region" . $region_count,
+			$region_start, $region_end);
+ 	  $curr_w->imageCreate("$tag_start",
+ 			     -image => $curr_w->{'MinusImage'});
+ 	  $curr_w->tagAdd("plus" . $region_count,
+ 			$tag_start);
+ 	  $curr_w->tagBind("plus" . $region_count,
+ 			 '<1>' => [$curr_w, 'ShowHideRegion', $region_count]);
+ 	  $curr_w->tagBind("plus" . $region_count,
+ 			 '<Enter>' => sub { $curr_w->configure(-cursor => 'hand2') });
+ 	  $curr_w->tagBind("plus" . $region_count,
+ 			 '<Leave>' => sub { $curr_w->configure(-cursor => 'left_ptr') });
+	  $curr_w->{RegionCount}++;
+  }
 }
 
 sub EndTag {
@@ -225,6 +280,7 @@ sub ShowHideRegion {
 
 sub DumpXML {
     my($w) = @_;
+    $w->Busy();
     my(@dump) = $w->dump("1.0", "end");
     my $out = "<?xml version='1.0' encoding='ISO-8859-1' ?>";
     $out .= "<perltktext>";
@@ -254,6 +310,7 @@ sub DumpXML {
 	}
     }
     $out .= "</perltktext>";
+    $w->Unbusy();
     $out;
 }
 
@@ -282,6 +339,10 @@ sub OpenCloseDepth {
 
 sub ShowToDepth {
     my($w, $depth) = @_;
+    $w->Busy();
+    if(!defined $depth) {
+      $depth = 999; #this is just a temporary workaround
+    }
 #warn "Close Depth $depth";
     $depth--;
     $w->OpenCloseDepth($depth, 0);
@@ -290,43 +351,7 @@ sub ShowToDepth {
 #warn "Open Depth $depth";
 	$w->OpenCloseDepth($depth, 1);
     }
-}
-
-# XXXX hmmmm.... braucht noch Arbeit....
-sub CloseSelectedRegion {
-    my $w = shift;
-    return unless $w->tagRanges("sel");
-
-    my $begin_region;
-    my $end_region;
-
-    # find beginning
-    my(@tags) = $w->tagNames("sel.first");
-warn "@tags";
-    foreach my $tag (@tags) {
-warn $tag;
-	if ($tag =~ /^region(\d+)/) {
-	    $begin_region = $1;
-	    last;
-	}
-    }
-
-    # find end
-    my(@tags) = $w->tagNames("sel.last");
-warn "@tags";
-    foreach my $tag (@tags) {
-warn $tag;
-	if ($tag =~ /^region(\d+)/) {
-	    $end_region = $1;
-	    last;
-	}
-    }
-
-    if (defined $begin_region and defined $end_region) {
-	for my $region ($begin_region .. $end_region) {
-	    $w->ShowHideRegion($region, -open => 0);
-	}
-    }
+    $w->Unbusy();
 }
 
 sub XMLMenu {
@@ -335,6 +360,8 @@ sub XMLMenu {
 	my $textmenu = $w->menu;
 	my $xmlmenu = $textmenu->cascade(-tearoff => 0,
 					 -label => "XML");
+	$xmlmenu->command(-label => 'Info',
+			  -command => sub { $w->Showinfo; });
 	my $depthmenu = $xmlmenu->cascade(-tearoff => 0,
 					  -label => 'Show to depth');
 	for my $depth (1 .. 6) {
@@ -358,15 +385,61 @@ sub _convert_from_unicode {
 }
 EOF
 } else {
-    # do nothing
+    # do nothing - maybe though
     eval <<'EOF';
+require Unicode::String;
+EOF
+    if (!$@) {
+    eval <<'EOF';
+sub _convert_from_unicode { 
+    my $umap = Unicode::String::utf8( $_[0]);
+    $umap->latin1;}
+EOF
+    } else {
+    eval <<'EOF';
+require Unicode::String;
 sub _convert_from_unicode { $_[0] }
 EOF
+    }
 }
 
 sub SourceType    { $_[0]->{Source} && $_[0]->{Source}[0] }
 sub SourceContent { $_[0]->{Source} && $_[0]->{Source}[1] }
 
+sub Showinfo {
+  my $w = shift;
+  $w->Busy();
+  my $file;
+  if($w->{Source} && $w->{Source}[0] eq 'file') {
+    $file = $w->{Source}[1];
+  }
+  my $d = $w->DialogBox(-title => "XMLView: Info", -buttons => ["OK"]);
+  my $textbox = $d->add("Scrolled",qw/ROText -wrap none -width 60 -height 5 -scrollbars se -background white/);
+  $textbox->pack(qw/-side left -expand yes -fill both/);
+  #$textbox->pack();
+  if(keys %xmlinfo) {
+    my $message = "XMLDecl: " ;
+    foreach my $i (qw(Version Encoding Standalone)) {
+      if(defined $xmlinfo{$i}) {
+        $message = $message . $i . ": " . $xmlinfo{$i} . " \n  ";
+      }
+    }
+    $textbox->insert("end", $message);
+    $message = "\nDOCTYPE: ";
+    foreach my $i (qw(Name Sysid Pubid Internal)) {
+      if(defined $xmlinfo{$i}) {
+        $message = $message . $xmlinfo{$i} . " \n  ";
+      }
+    }
+    $textbox->insert("end", $message);
+  }
+  if(defined $file ) {
+    $textbox->insert("end", "\nFile: " . $file);
+    $textbox->insert("end", " \n  " . scalar( -s $file ) . " Bytes\n");
+  }
+  my $button = $d->Show;
+  $w->Unbusy();
+}
 1;
 __END__
 # Below is the stub of documentation for your module. You better edit it!
