@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.21 2000/08/23 23:26:51 eserte Exp $
+# $Id: XMLViewer.pm,v 1.22 2000/09/01 21:48:32 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -529,6 +529,36 @@ Tk::Text widgets and the method for XMLViewer widgets.
     $xml_string1 = Tk::XMLViewer::DumpXML($text_widget);
     $xml_string2 = $xmlviewer->DumpXML;
 
+=item SetIndent
+
+Set indent with for XML tags
+
+    $xmlviewer->SetIndent(width);
+
+=item XMLMenu
+
+Insert XML Menu into Text widget menu.
+
+    $xmlviewer->XMLMenu;
+
+=item SourceType
+
+Returns type of source used for last insertXML (-file or -text)
+
+=item SourceContent
+
+Returns filename (source type -file) or XML text (source type -text) used
+for last insertXML.
+
+=item GetInfo
+
+Returns hash of standard XML decl and DOCTYPE elements:
+
+    my %xmlheader = $xmlviewer->GetInfo;
+
+Elements for XMLdecl: Version Encoding Standalone
+Elements for DOCTYPE: Name Sysid Pubid Internal
+
 =back
 
 =head1 BUGS
@@ -546,7 +576,7 @@ Perl/Tk anyway).
 
 Viewing of large XML files is slow.
 
-=head1 TODO
+head1 TODO
 
  - show to depth n: close everything from depth n+1
  - create menu item "close selected region"
