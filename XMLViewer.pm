@@ -1,15 +1,15 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.33 2003/11/12 20:46:13 eserte Exp $
+# $Id: XMLViewer.pm,v 1.34 2004/03/20 18:57:38 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright © 2000, 2003 Slaven Rezic. All rights reserved.
+# Copyright © 2000, 2003, 2004 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
-# Mail: mailto:slaven@rezic.de
-# WWW:  http://www.rezic.de/eserte/
+# Mail: srezic@cpan.org
+# WWW:  http://www.sourceforge.net/projects/srezic
 #
 
 package Tk::XMLViewer;
@@ -25,11 +25,11 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.16';
+$VERSION = '0.17';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $indent_width = 32;
-my $use_elide = $Tk::VERSION < 800 || $Tk::VERSION == 804.025;
+my $use_elide = $Tk::VERSION < 800 || $Tk::VERSION >= 804.025;
 
 sub SetIndent {
     my $w = shift;
@@ -74,12 +74,15 @@ sub insertXML {
     my $w = shift;
     $w->Busy();
     my(%args) = @_;
+    my $xmlparserargs = delete $args{-xmlparserargs};
     my $p1 = new XML::Parser(Style => "Stream",
 			     Handlers => {
   				 Comment => \&hComment,
   				 XMLDecl => \&hDecl,
   				 Doctype => \&hDoctype,
-  			     });
+  			     },
+			     $xmlparserargs ? %$xmlparserargs : (),
+			    );
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
@@ -577,8 +580,10 @@ example:
 
 =item insertXML
 
-Insert XML into the XMLViewer widget. Use the -file argument to insert
-a file and -text to insert an XML string.
+Insert XML into the XMLViewer widget. Use the B<-file> argument to
+insert a file and B<-text> to insert an XML string. A hash to the
+B<-xmlparserargs> option will be passed to the L<XML::Parser>
+constructor.
 
 =item DumpXML
 
@@ -666,6 +671,6 @@ Some additions by Jerry Geiger <jgeiger@rios.de>.
 
 =head1 SEE ALSO
 
-L<XML::Parser>(3), L<Tk::Text>(3).
+L<XML::Parser>, L<Tk::Text>, L<tkxmlview>.
 
 =cut
