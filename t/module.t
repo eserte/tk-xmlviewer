@@ -12,9 +12,13 @@ use Tk;
 use Tk::XMLViewer;
 use XML::Parser;
 use FindBin;
+use Getopt::Long;
 $loaded = 1;
 my $ok = 1;
 print "ok " . $ok++ . "\n";
+
+my $demo = 0;
+GetOptions("demo!" => \$demo) or die "usage!";
 
 ######################### End of black magic.
 
@@ -109,8 +113,8 @@ $okb->focus;
 $f->Button(-text => "Not OK",
 	   -command => sub { $not = "not "; })->pack(-side => "left");
 
-if ($ENV{BATCH}) {
-    $top->after(1000, sub { $not = "" });
+if (!$demo || $ENV{BATCH}) {
+    $top->repeat(100, sub { $not = "" }); # repeat instead of after here
 }
 
 $top->update;
