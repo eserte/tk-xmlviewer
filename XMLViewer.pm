@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.18 2000/08/20 20:43:15 eserte Exp $
+# $Id: XMLViewer.pm,v 1.19 2000/08/20 20:46:45 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -294,6 +294,7 @@ sub DumpXML {
 	    $out .= "</tag>\n";
 	    $i+=2;
 	} elsif ($x eq 'image') {
+	    local $^W = undef; # XXX often there is no image?!
 	    $out .= "<image name='" . $dump[$i+1] . "' />\n";
 	    $i+=2;
 	} elsif ($x eq 'text') {
