@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.22 2000/09/01 21:48:32 eserte Exp $
+# $Id: XMLViewer.pm,v 1.23 2000/09/03 01:30:46 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $indent_width = 32;
@@ -420,7 +420,14 @@ sub XMLMenu {
     }
 }
 
-if ($] >= 5.006) {
+if ($] >= 5.007) {
+    # tr translator for unicode not available anymore
+    eval <<'EOF';
+sub _convert_from_unicode {
+    pack("C*", unpack("U*", $_[0]));
+}
+EOF
+} elsif ($] >= 5.006) {
     # unicode translator available
     eval <<'EOF';
 sub _convert_from_unicode {
