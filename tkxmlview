@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: tkxmlview,v 1.4 2000/07/29 00:27:15 eserte Exp $
+# $Id: tkxmlview,v 1.5 2000/08/20 20:42:05 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2000 Slaven Rezic. All rights reserved.
@@ -15,10 +15,20 @@
 
 use Tk;
 use Tk::XMLViewer;
+use Getopt::Long;
+
+my $indent;
+my $mainbg;
+GetOptions("indent=i" => \$indent,
+	   "mainbg=s" => \$mainbg,
+	  );
 
 $top = new MainWindow;
 my $file = shift;
-$xmlviewer = $top->Scrolled("XMLViewer")->pack(-expand => 1, -fill => "both");
+$xmlviewer = $top->Scrolled("XMLViewer", -scrollbars => "osw"
+			   )->pack(-expand => 1, -fill => "both");
+$xmlviewer->configure(-background => $mainbg) if defined $mainbg;
+$xmlviewer->SetIndent($indent) if defined $indent;
 $xmlviewer->XMLMenu;
 if ($Tk::VERSION >= 800.015) {
     my $textmenu = $xmlviewer->menu;
@@ -86,12 +96,33 @@ viewxml();
 MainLoop;
 
 sub openxml {
+    my $dir;
+    if(defined $file && (index($file, "/") >= 0) ) {
+	$dir = substr($file, 0, rindex($file, "/"));
+    }
     $file = $top->getOpenFile(-filetypes => [['XML Files', '*.xml'],
-					     ['All Files', '*']]);
+					     ['All Files', '*']],
+			      (defined $dir ? (-initialdir => $dir) : ()),
+			     );
 }
+
 sub viewxml {
     if (defined $file) {
-	$top->title($file);
+	my $fname;
+	if(length $file > 40) {
+	    if(rindex($file, "/") >= 0 ) {
+		$fname = substr($file, rindex($file, "/")+1);
+	    } else {
+		$fname = $file;
+	    }
+	    if (length $fname > 40) {
+		$fname = substr($fname, -38);
+	    }
+	    $fname = "... " .$fname;
+	} else {
+	    $fname = $file;
+	}
+	$top->title("XMLView: ".$fname);
 	$xmlviewer->delete("1.0", "end");
 	$xmlviewer->insertXML(-file => $file);
     }
