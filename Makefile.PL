@@ -8,6 +8,7 @@ WriteMakefile(
     'VERSION_FROM' => 'XMLViewer.pm', # finds $VERSION
     'PREREQ_PM' => {'Tk'          => 0,
 	            'XML::Parser' => 0,
+		    ($] < 5.006 ? ('Unicode::String' => 0) : ()),
 	           },
     'dist'      => {'COMPRESS'=>'gzip -9f', 'SUFFIX' => '.gz',
                     'POSTOP'=>'-$(CHMOD) 644 $(DISTVNAME).tar$(SUFFIX)'},
