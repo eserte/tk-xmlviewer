@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.19 2000/08/20 20:46:45 eserte Exp $
+# $Id: XMLViewer.pm,v 1.20 2000/08/20 20:54:36 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
