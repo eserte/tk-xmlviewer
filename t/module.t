@@ -109,6 +109,10 @@ $okb->focus;
 $f->Button(-text => "Not OK",
 	   -command => sub { $not = "not "; })->pack(-side => "left");
 
+if ($ENV{BATCH}) {
+    $top->after(1000, sub { $not = "" });
+}
+
 $top->update;
 $top->waitVariable(\$not);
 
