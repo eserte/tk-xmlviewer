@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.8 2000/01/19 16:26:35 eserte Exp $
+# $Id: XMLViewer.pm,v 1.9 2000/01/24 11:14:48 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -14,7 +14,7 @@
 
 package Tk::XMLViewer;
 
-require Tk;
+use Tk 800.013; # -elide
 require Tk::ROText;
 require Tk::Pixmap;
 use strict;
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
@@ -317,11 +317,17 @@ Tk::Text widgets and the method for XMLViewer widgets.
     $xml_string1 = Tk::XMLViewer::DumpXML($text_widget);
     $xml_string2 = $xmlviewer->DumpXML;
 
+=back
+
 =head1 BUGS
 
 Unicode is not handled.
 
 DumpXML will not work with nested text tags.
+
+There should be only one insertXML operation at one time (these is
+probably only an issue with threads, which do not work in Perl/Tk
+anyway).
 
 =head1 AUTHOR
 
@@ -329,6 +335,6 @@ Slaven Rezic, <eserte@cs.tu-berlin.de>
 
 =head1 SEE ALSO
 
-XML::Parser(3), Tk::Text(3).
+L<XML::Parser>(3), L<Tk::Text>(3).
 
 =cut
