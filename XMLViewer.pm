@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.2 2000/01/18 14:37:02 eserte Exp $
+# $Id: XMLViewer.pm,v 1.3 2000/01/19 11:12:58 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,10 +25,10 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.01';
+$VERSION = '0.03';
 
 my($curr_w); # XXXXX!
-my $indent_width = 2;
+my $indent_width = 32;
 
 sub InitObject {
     my($w,$args) = @_;
@@ -44,9 +44,15 @@ sub InitObject {
     $w->tagConfigure('xml_attrval',
 		     -foreground => 'DarkGreen',
 		     );
+    for my $i (0 .. 10) {
+	$w->tagConfigure("xml_indent$i",
+			 -lmargin1 => $i*$indent_width,
+			 -lmargin2 => $i*$indent_width,
+			);
+    }
 }
 
-sub insertxml {
+sub insertXML {
     my $w = shift;
     my $file = shift;
     my $p1 = new XML::Parser(Style => "Stream");
@@ -55,14 +61,9 @@ sub insertxml {
     $p1->parsefile($file);
 }
 
-sub _indent {
-    my $w = shift;
-    " " x ($w->{Indent} * $indent_width);
-}
-
 sub StartTag {
-    $curr_w->insert("end",
-		    $curr_w->_indent . "<", "",
+    my $start = $curr_w->index("end - 1 chars");
+    $curr_w->insert("end", "<", "",
 		    $_[1], 'xml_tag');
     if (%_) {
 	$curr_w->insert("end", " ");
@@ -80,23 +81,30 @@ sub StartTag {
 			    "'", "");
 	}
     }
-    $curr_w->insert("end", ">\n");
-    $curr_w->{Indent} += 2;
+    $curr_w->insert("end", ">");
+    $curr_w->tagAdd('xml_indent' . $curr_w->{Indent}, $start, "end");
+    $curr_w->insert("end", "\n");
+    $curr_w->{Indent}++;
 }
 
 sub Text {
     s/^\s+//;
     s/\s+$//;
     if ($_ ne "") {
-	$curr_w->insert("end", $curr_w->_indent . $_ . "\n");
+	$curr_w->insert("end",
+			$_ . "\n",
+			'xml_indent' . $curr_w->{Indent});
     }
 }
 
 sub EndTag {
-    $curr_w->{Indent} -= 2;
-    $curr_w->insert("end", $curr_w->_indent . "<", "",
+    $curr_w->{Indent} --;
+    my $start = $curr_w->index("end - 1 chars");
+    $curr_w->insert("end", "<", "",
 		    "/$_[1]", 'xml_tag',
-		    ">\n");
+		    ">");
+    $curr_w->tagAdd('xml_indent' . $curr_w->{Indent}, $start, "end");
+    $curr_w->insert("end", "\n");
 }
 
 1;
