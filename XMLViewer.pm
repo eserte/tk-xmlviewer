@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.30 2003/08/01 13:03:34 eserte Exp $
+# $Id: XMLViewer.pm,v 1.31 2003/08/01 13:22:13 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003 Slaven Rezic. All rights reserved.
@@ -74,8 +74,6 @@ sub insertXML {
     $w->Busy();
     my(%args) = @_;
     my $p1 = new XML::Parser(Style => "Stream",
-			     # XXX check!
-			     #XXX nonono! ($Tk::VERSION < 804 ? (ProtocolEncoding => 'UTF-8') : ()),
 			     Handlers => {
   				 Comment => \&hComment,
   				 XMLDecl => \&hDecl,
@@ -436,7 +434,11 @@ sub XMLMenu {
     }
 }
 
-if ($] >= 5.006001) {
+if ($Tk::VERSION >= 803) { # native unicode support
+    eval <<'EOF';
+sub _convert_from_unicode { $_[0] }
+EOF
+} elsif ($] >= 5.006001) {
     # tr translator for unicode not available anymore
     eval <<'EOF';
 sub _convert_from_unicode {
