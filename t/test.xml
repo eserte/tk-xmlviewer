@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE ecollateral SYSTEM "test.dtd">
 <book title="test">
-
+        <!-- a comment -->
 	<chapter id="01">
 		<language>DE</language>
 		<title>Design</title>
