@@ -11,6 +11,7 @@ END {print "not ok 1\n" unless $loaded;}
 use Tk;
 use Tk::XMLViewer;
 use XML::Parser;
+use FindBin;
 $loaded = 1;
 my $ok = 1;
 print "ok " . $ok++ . "\n";
@@ -21,8 +22,7 @@ print "ok " . $ok++ . "\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-#$file = "/oo/kunden/vi/ecollateral2/in/ecollateral_Aero_Orea_de.xml";
-$file = "test.xml";
+$file = "$FindBin::RealBin/test.xml";
 
 $top = new MainWindow;
 $t2 = $top->Toplevel;
@@ -33,7 +33,7 @@ $xmlwidget = $top->Scrolled('XMLViewer',
 			    -scrollbars => "osoe")->pack;
 
 $xmlwidget->tagConfigure('xml_comment', -foreground => "white",
-			 -background => "red", -font => "Helvetica 6");
+			 -background => "red", -font => "Helvetica 15");
 
 $xmlwidget->insertXML(-file => $file);
 $xmlwidget->XMLMenu;
