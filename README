@@ -16,7 +16,7 @@ Additional requirements:
 XML-Parser and, of course, the Perl/Tk distribution. To automatically
 install these modules, use the prereqinst script:
 
-	$ perl prereqinst
+	$ perl prereqinst.pl
 
 To install with ActiveState Perl type
 
@@ -27,7 +27,7 @@ To install with ActiveState Perl type
 If there are modules missing use the prereqinst script with the -ppm
 option:
 
-	$ perl prereqinst -ppm
+	$ perl prereqinst.pl -ppm
 
 Included is also a standalone program for viewing XML files: tkxmlview.
 
