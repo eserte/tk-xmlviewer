@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.4 2000/01/19 13:01:14 eserte Exp $
+# $Id: XMLViewer.pm,v 1.5 2000/01/19 13:57:44 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
@@ -46,8 +46,8 @@ sub InitObject {
 		     -foreground => 'DarkGreen',
 		     );
     $w->{IndentTags}  = [];
-    $w->{RegionStart} = [];
-    $w->{TagStart}    = [];
+#    $w->{RegionStart} = [];
+#    $w->{TagStart}    = [];
     $w->{RegionCount} = 0;
 
     # XXX warum parent?
@@ -84,7 +84,9 @@ sub _flush {
     if ($w->{PendingEnd}) {
 	$w->insert("end", ">\n");
 	$w->{PendingEnd} = 0;
-	$w->{RegionStart}[$w->{Indent}] = $w->index("end - 1 chars");
+	my $indent = $w->{Indent}-1;
+	$w->markSet('regionstart' . $indent, $w->index("end - 1 chars"));
+	$w->markGravity('regionstart' . $indent, 'left');
     }
 }
 
@@ -111,8 +113,8 @@ sub StartTag {
     }
     $curr_w->tagAdd($curr_w->_indenttag, $start, "end");
     $curr_w->{PendingEnd} = 1;
+    $curr_w->markSet('tagstart' . $curr_w->{Indent}, $start);
     $curr_w->{Indent}++;
-    $curr_w->{TagStart}[$curr_w->{Indent}] = $start;
 }
 
 sub Text {
@@ -127,30 +129,33 @@ sub Text {
 }
 
 sub EndTag {
-    my $region_start = $curr_w->{RegionStart}[$curr_w->{Indent}];
-    my $tag_start    = $curr_w->{TagStart}[$curr_w->{Indent}];
-    my $region_end   = $curr_w->index("end");
     $curr_w->{Indent} --;
 
     if ($curr_w->{PendingEnd}) {
 	$curr_w->insert("end", " />\n");
 	$curr_w->{PendingEnd} = 0;
     } else {
+	my $region_start = $curr_w->index('regionstart' . $curr_w->{Indent});
+	my $tag_start    = $curr_w->index('tagstart' . $curr_w->{Indent});
+	my $region_end   = $curr_w->index("end");
 	my $start = $curr_w->index("end - 1 chars");
 	$curr_w->insert("end", "<", "",
 			"/$_[1]", 'xml_tag',
 			">");
 	$curr_w->tagAdd($curr_w->_indenttag, $start, "end");
 	my $region_count = $curr_w->{RegionCount};
-warn "Region $region_count $region_start $region_end";
 	$curr_w->tagAdd("region" . $region_count,
 			$region_start, $region_end);
- 	$curr_w->imageCreate($tag_start,
+
+ 	$curr_w->imageCreate("$tag_start",
  			     -image => $curr_w->{'MinusImage'});
  	$curr_w->tagAdd("plus" . $region_count,
  			$tag_start);
+ 	$curr_w->tagAdd($curr_w->_indenttag,
+ 			$tag_start);
  	$curr_w->tagBind("plus" . $region_count,
- 			 '<1>' => [$curr_w, '_show_hide_region', $region_count]);
+ 			 '<1>' => [$curr_w, '_show_hide_region',
+				   $region_count, $curr_w->{'Indent'}]);
  	$curr_w->tagBind("plus" . $region_count,
  			 '<Enter>' => sub { $curr_w->configure(-cursor => 'hand2') });
  	$curr_w->tagBind("plus" . $region_count,
@@ -161,25 +166,23 @@ warn "Region $region_count $region_start $region_end";
 }
 
 sub _show_hide_region {
-    my($w, $region) = @_;
-    warn 1;
+    my($w, $region, $indent) = @_;
     my $index = $w->index("plus" . $region . ".first");
-    warn 2;
     $w->delete("plus" . $region . ".first",
 	       "plus" . $region . ".last");
     if ($w->tagCget("region" . $region, -elide)) {
 	$w->imageCreate($index,
 			-image => $w->{'MinusImage'});
-	$w->tagConfigure("region" . $region, -elide => 0);
-	warn "show $region";
+	$w->tagConfigure("region" . $region, -elide => undef);
     } else {
 	$w->imageCreate($index,
 			-image => $w->{'PlusImage'});
 	$w->tagConfigure("region" . $region, -elide => 1);
-	warn "del $region " . $w->index("region$region.first") . " " .
-	    $w->index("region$region.last");
     }
     $w->tagAdd("plus" . $region, $index);
+    $w->tagAdd($w->_indenttag($indent),
+	       $index);
+
 }
 
 1;
