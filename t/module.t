@@ -52,15 +52,16 @@ $f->Scale(-variable => \$depth,
 $f->Button(-text => "Dump Tk::Text as XML",
 	   -command => sub {
 	       my $s = $xmlwidget->DumpXML;
-	       warn $s;
+	       #warn $s;
 	       $t = $top->Toplevel;
 	       $xmlwidget2 = $t->Scrolled('XMLViewer',
 					  -scrollbars => "osoe")->pack;
 	       $xmlwidget2->insertXML(-text => $s);
 	       $xmlwidget2->XMLMenu;
 	   })->pack(-side => "left");
-$f->Button(-text => "OK",
-	   -command => sub { $not = ""; })->pack(-side => "left");
+my $okb = $f->Button(-text => "OK",
+		     -command => sub { $not = ""; })->pack(-side => "left");
+$okb->focus;
 $f->Button(-text => "Not OK",
 	   -command => sub { $not = "not "; })->pack(-side => "left");
 
