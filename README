@@ -13,8 +13,23 @@ To install, type
 	$ make install
 
 Additional requirements:
-XML-Parser and, of course, the Perl/Tk distribution.
+XML-Parser and, of course, the Perl/Tk distribution. To automatically
+install these modules, use the autoinstall.pl script:
+
+	$ perl autoinstall.pl
+
+To install with ActiveState Perl type
+
+	$ perl Makefile.PL
+	$ nmake
+	$ nmake install
+
+If there are modules missing use the autoinstall script with the -ppm
+option:
+
+	$ perl autoinstall.pl -ppm
 
 Included is also a standalone program for viewing XML files: tkxmlview.
 
-Send bug reports, comments and suggestions to eserte@cs.tu-berlin.de
+Send bug reports, comments and suggestions to slaven.rezic@berlin.de
+
