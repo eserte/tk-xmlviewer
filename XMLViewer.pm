@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.9 2000/01/24 11:14:48 eserte Exp $
+# $Id: XMLViewer.pm,v 1.10 2000/02/28 23:23:52 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -170,9 +170,7 @@ sub EndTag {
 	my $tag_start    = $curr_w->index('tagstart' . $curr_w->{Indent});
 	my $region_end   = $curr_w->index("end");
 	my $start = $curr_w->index("end - 1 chars");
-	$curr_w->insert("end", "<", "",
-			"/$_[1]", 'xml_tag',
-			">");
+	$curr_w->insert("end", "</$_[1]>", 'xml_tag');
 	$curr_w->tagAdd($curr_w->_indenttag, $start, "end");
 	my $region_count = $curr_w->{RegionCount};
 	$curr_w->tagAdd("region" . $region_count,
@@ -251,19 +249,18 @@ sub DumpXML {
 	    warn "Unknown type $x";
 	    $i+=2;
 	}
-	
-	
     }
     $out .= "</perltktext>";
     $out;
 }
 
-sub OpenDepth {
-    my($w, $depth) = @_;
+sub OpenCloseDepth {
+    my($w, $depth, $open) = @_;
     my($begin, $end) = ("1.0");
     while(1) {
 	($begin, $end) = $w->tagNextrange('xml_indent' . $depth, $begin);
-	last if $begin eq '';
+warn "$begin $end<" if $depth == 2;
+	last if !defined $begin || $begin eq '';
 	my(@tags) = $w->tagNames($begin);
 	my $region;
 	foreach my $tag (@tags) {
@@ -272,11 +269,44 @@ sub OpenDepth {
 		last;
 	    }
 	}
-	next if !defined $region;
-	$w->ShowHideRegion($region, -open => 0);
-	$begin = "$end + 1 chars";
+warn "region=$region" if $depth==2;
+	if (defined $region) {
+	    $w->ShowHideRegion($region, -open => $open);
+	}
+	$begin = $end; #"$end + 1 chars";
     }
 }
+
+sub ShowToDepth {
+    my($w, $depth) = @_;
+warn "Close Depth $depth";
+    $depth--;
+    $w->OpenCloseDepth($depth, 0);
+    while ($depth > 0) {
+	$depth--;
+warn "Open Depth $depth";
+	$w->OpenCloseDepth($depth, 1);
+    }
+}
+
+sub XMLMenu {
+    my $w = shift;
+    if ($Tk::VERSION >= 800.015) {
+	my $textmenu = $w->menu;
+	my $xmlmenu = $textmenu->cascade(-tearoff => 0,
+					 -label => "XML");
+	my $depthmenu = $xmlmenu->cascade(-tearoff => 0,
+					  -label => 'Show to depth');
+	for my $depth (1 .. 6) {
+	    my $_depth = $depth;
+	    $depthmenu->command(-label => $depth,
+				-command => sub { $w->ShowToDepth($_depth) });
+	}
+	$depthmenu->command(-label => "Open all",
+			    -command => sub { $w->ShowToDepth(undef) });
+    }
+}
+
 
 1;
 __END__
@@ -326,8 +356,10 @@ Unicode is not handled.
 DumpXML will not work with nested text tags.
 
 There should be only one insertXML operation at one time (these is
-probably only an issue with threads, which do not work in Perl/Tk
-anyway).
+probably only an issue with threaded operations, which do not work in
+Perl/Tk anyway).
+
+Viewing of large XML files is slow.
 
 =head1 AUTHOR
 
