@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: tkxmlview,v 1.11 2003/04/26 23:37:53 eserte Exp $
+# $Id: tkxmlview,v 1.12 2003/08/01 12:58:37 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2000, 2003 Slaven Rezic. All rights reserved.
@@ -29,6 +29,7 @@ GetOptions("indent=i" => \$indent,
 	  );
 
 my $string;
+my @url_history;
 my $file = shift;
 my $xmlviewer = $top->Scrolled("XMLViewer", -scrollbars => "osw"
 			      )->pack(-expand => 1, -fill => "both");
@@ -108,6 +109,7 @@ if (!defined $file) {
 MainLoop;
 
 sub open_file_or_url {
+    # guess if it's an URL
     if ($file =~ /^(http|https|file|ftp):/) {
 	openandviewurl();
     } else {
@@ -120,10 +122,15 @@ sub openxml {
     if(defined $file && (index($file, "/") >= 0) ) {
 	$dir = substr($file, 0, rindex($file, "/"));
     }
-    $file = $top->getOpenFile(-filetypes => [['XML Files', '*.xml'],
-					     ['All Files', '*']],
-			      (defined $dir ? (-initialdir => $dir) : ()),
-			     );
+    $file = $top->getOpenFile
+	(-filetypes => [['Generic XML Files', '*.xml'],
+			['XSLT Files', ['*.xslt','.xsl']],
+			['RSS Files', '*.rss'],
+			['RDF Files', '*.rdf'],
+			['WML Files', '*.wml'],
+			['All Files', '*']],
+	 (defined $dir ? (-initialdir => $dir) : ()),
+	);
 }
 
 sub guiopenurl {
@@ -133,14 +140,23 @@ sub guiopenurl {
     my $e;
     my $continue = 0;
     my $url;
+    my $Entry = "Entry";
+    eval {
+        # try loading the module, otherwise $Entry is left to the value "Entry"
+        require Tk::HistEntry;
+        $Entry = "SimpleHistEntry";
+    };
     Tk::grid(
 	     $t->Label(-text => "URL:"),
-	     $e = $t->Entry(-textvariable => \$url),
+	     $e = $t->$Entry(-textvariable => \$url),
 	     $t->Button(-text => "OK",
 			-command => sub { $continue = 1 }),
 	     $t->Button(-text => "Cancel",
 			-command => sub { $continue = -1 }),
 	    );
+    if ($e->can('history')) {
+	$e->history(\@url_history);
+    }
     $e->bind("<Return>" => sub { $continue = 1 });
     $e->bind("<Escape>" => sub { $continue = -1 });
     $e->focus;
@@ -179,13 +195,15 @@ sub viewxml {
 sub openandviewurl {
     my($url) = $file;
 
+    push @url_history, $url;
+
     if (!$ua) {
 	$ua = LWP::UserAgent->new(env_proxy => 1);
     }
     my $resp = $ua->get($url);
     if (!$resp->is_success) {
 	$top->messageBox(-title => "Error",
-			 -text => "GET was not successful: " . $resp->code,
+			 -message => "GET was not successful: " . $resp->code,
 			 -icon => "error",
 			);
 	return 0;
