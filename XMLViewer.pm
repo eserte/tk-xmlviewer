@@ -1,15 +1,15 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.28 2002/02/28 20:37:44 eserte Exp $
+# $Id: XMLViewer.pm,v 1.29 2003/04/26 23:34:49 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright © 2000 Slaven Rezic. All rights reserved.
+# Copyright © 2000, 2003 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
-# Mail: mailto:eserte@cs.tu-berlin.de
-# WWW:  http://www.cs.tu-berlin.de/~eserte/
+# Mail: mailto:slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
 #
 
 package Tk::XMLViewer;
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $indent_width = 32;
@@ -74,7 +74,8 @@ sub insertXML {
     $w->Busy();
     my(%args) = @_;
     my $p1 = new XML::Parser(Style => "Stream",
-			     ProtocolEncoding => 'UTF-8',
+			     # XXX check!
+			     #XXX nonono! ($Tk::VERSION < 804 ? (ProtocolEncoding => 'UTF-8') : ()),
 			     Handlers => {
   				 Comment => \&hComment,
   				 XMLDecl => \&hDecl,
@@ -85,11 +86,11 @@ sub insertXML {
     $curr_w = $w;
     eval {
 	if ($args{-file}) {
-	    $p1->parsefile($args{-file});
 	    $w->{Source} = ['file', $args{-file}];
+	    $p1->parsefile($args{-file});
 	} elsif (exists $args{-text}) {
-	    $p1->parse($args{-text});
 	    $w->{Source} = ['text', $args{-text}];
+	    $p1->parse($args{-text});
 	} else {
 	    die "-text or -file argument missing";
 	}
@@ -273,16 +274,24 @@ sub ShowHideRegion {
     my(@old_tags) = $w->tagNames("showhidemarkbegin");
     $w->delete("showhidemarkbegin", "showhidemarkend");
     if (!exists $args{-open}) {
-	$args{-open} = $w->tagCget("region" . $region, -elide);
+	if ($Tk::VERSION > 800) {
+	    $args{-open} = $w->tagCget("region" . $region, '-state') eq 'hidden';
+	} else {
+	    $args{-open} = $w->tagCget("region" . $region, '-elide');
+	}
     }
     if ($args{-open}) {
 	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'MinusImage'});
-	$w->tagConfigure("region" . $region, -elide => undef);
+	$w->tagConfigure("region" . $region,
+			 $Tk::VERSION > 800 ? (-state => '')
+			                    : (-elide => undef));
     } else {
 	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'PlusImage'});
-	$w->tagConfigure("region" . $region, -elide => 1);
+	$w->tagConfigure("region" . $region,
+			 $Tk::VERSION > 800 ? (-state => 'hidden')
+			                    : (-elide => 1));
     }
     # restore old tags for minus/plus image
     foreach my $tag (@old_tags) {
@@ -406,7 +415,7 @@ warn $tag;
 
 sub XMLMenu {
     my $w = shift;
-    if ($w->can("menu")) {
+    if ($Tk::VERSION > 800.014 && $w->can("menu")) {
 	my $textmenu = $w->menu;
 	my $xmlmenu = $textmenu->cascade(-tearoff => 0,
 					 -label => "XML");
@@ -427,41 +436,40 @@ sub XMLMenu {
     }
 }
 
+if ($] >= 5.006001) {
+    # tr translator for unicode not available anymore
+    eval <<'EOF';
+sub _convert_from_unicode {
+    pack("C*", unpack("U*", $_[0]));
+}
+EOF
+} elsif ($] >= 5.006) {
+    # unicode translator available
+    eval <<'EOF';
+sub _convert_from_unicode {
+    $_[0] =~ tr/\0-\x{FF}//UC;
+    $_[0];
+}
+EOF
+} else {
+    # try Unicode::String
+    eval <<'EOF';
+require Unicode::String;
+EOF
+    if (!$@) {
+	eval <<'EOF';
+sub _convert_from_unicode {
+    my $umap = Unicode::String::utf8( $_[0]);
+    $umap->latin1;
+}
+EOF
+    } else { # do nothing
+        warn "No unicode decoder found --- consider installing Unicode::String";
+        eval <<'EOF';
 sub _convert_from_unicode { $_[0] }
-#  if ($] >= 5.006001) {
-#      # tr translator for unicode not available anymore
-#      eval <<'EOF';
-#  sub _convert_from_unicode {
-#      pack("C*", unpack("U*", $_[0]));
-#  }
-#  EOF
-#  } elsif ($] >= 5.006) {
-#      # unicode translator available
-#      eval <<'EOF';
-#  sub _convert_from_unicode {
-#      $_[0] =~ tr/\0-\x{FF}//UC;
-#      $_[0];
-#  }
-#  EOF
-#  } else {
-#      # try Unicode::String
-#      eval <<'EOF';
-#  require Unicode::String;
-#  EOF
-#      if (!$@) {
-#  	eval <<'EOF';
-#  sub _convert_from_unicode {
-#      my $umap = Unicode::String::utf8( $_[0]);
-#      $umap->latin1;
-#  }
-#  EOF
-#      } else { # do nothing
-#          eval <<'EOF';
-#  require Unicode::String;
-#  sub _convert_from_unicode { $_[0] }
-#  EOF
-#      }
-#  }
+EOF
+    }
+}
 
 sub SourceType    { $_[0]->{Source} && $_[0]->{Source}[0] }
 sub SourceContent { $_[0]->{Source} && $_[0]->{Source}[1] }
@@ -641,7 +649,7 @@ head1 TODO
 
 =head1 AUTHOR
 
-Slaven Rezic, <eserte@cs.tu-berlin.de>
+Slaven Rezic, <slaven@rezic.de>
 
 Some additions by Jerry Geiger <jgeiger@rios.de>.
 
