@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: tkxmlview,v 1.8 2003/04/26 23:04:35 eserte Exp $
+# $Id: tkxmlview,v 1.9 2003/04/26 23:35:04 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2000 Slaven Rezic. All rights reserved.
@@ -44,7 +44,7 @@ if ($xmlviewer->can("menu")) {
 	$filemenu->command(-label => 'Re-Open',
 			   -command => sub {
 			       if ($xmlviewer->SourceType eq 'file'){
-				   viewxml();
+				   open_file_or_url();
 			       }
 			   });
 	if (eval { require LWP::UserAgent }) {
@@ -98,15 +98,22 @@ if ($xmlviewer->can("menu")) {
 			   });
     }
 }
-if (defined $file && $file =~ /^(http|https|file|ftp):/) {
-    openandviewurl($file);
+
+if (!defined $file) {
+    openxml(); viewxml();
 } else {
-    if (!defined $file) {
-	openxml();
-    }
-    viewxml();
+    open_file_or_url();
 }
+
 MainLoop;
+
+sub open_file_or_url {
+    if ($file =~ /^(http|https|file|ftp):/) {
+	openandviewurl();
+    } else {
+	viewxml();
+    }
+}
 
 sub openxml {
     my $dir;
@@ -140,7 +147,8 @@ sub guiopenurl {
     $t->waitVariable(\$continue);
     $t->destroy if Tk::Exists($t);
     if ($continue == 1) {
-	return openandviewurl($url);
+	$file = $url;
+	return openandviewurl();
     } else {
 	0;
     }
@@ -169,7 +177,7 @@ sub viewxml {
 }
 
 sub openandviewurl {
-    my($url) = @_;
+    my($url) = $file;
 
     if (!$ua) {
 	$ua = LWP::UserAgent->new(env_proxy => 1);
