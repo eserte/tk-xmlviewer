@@ -29,7 +29,12 @@ $t2 = $top->Toplevel;
 $t2->withdraw;
 
 $xmlwidget = $top->Scrolled('XMLViewer',
+			    -tagcolor => 'blue',
 			    -scrollbars => "osoe")->pack;
+
+$xmlwidget->tagConfigure('xml_comment', -foreground => "white",
+			 -background => "red", -font => "Helvetica 6");
+
 $xmlwidget->insertXML(-file => $file);
 $xmlwidget->XMLMenu;
 
