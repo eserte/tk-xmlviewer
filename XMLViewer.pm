@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.7 2000/01/19 15:58:42 eserte Exp $
+# $Id: XMLViewer.pm,v 1.8 2000/01/19 16:26:35 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
@@ -60,12 +60,42 @@ sub insertXML {
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
-    if ($args{-file}) {
-	$p1->parsefile($args{-file});
+    eval {
+	if ($args{-file}) {
+	    $p1->parsefile($args{-file});
+	} elsif (exists $args{-text}) {
+	    $p1->parse($args{-text});
+	} else {
+	    die "-text or -file argument missing";
+	}
+    };
+    if ($@) {
+	if ($@ =~ /byte\s+(\d+)/) {
+	    my $byte = $1;
+	    my $xmlstring; # the erraneauos (sp?) part
+	    if ($args{-file}) {
+		if (open(F, $args{-file})) {
+		   binmode F;
+		   seek(F, $byte, 0);
+		   local($/) = undef;
+		   $xmlstring = <F>;
+		   close F;
+		}
+	    } else {
+		$xmlstring = substr($args{-text}, $byte);
+	    }
+	    $w->tagConfigure("ERROR",
+			     -background => '#800000',
+			     -foreground => '#ffffff',
+			    );
+	    $w->see("end");
+	    $w->insert("end", "ERROR", "ERROR", $xmlstring);
+	} else {
+	    die "Error while parsing XML: $@";
+	}
     } else {
-	$p1->parse($args{-text});
+	$w->_flush;
     }
-    $w->_flush;
 }
 
 sub _indenttag {
@@ -286,6 +316,12 @@ Tk::Text widgets and the method for XMLViewer widgets.
 
     $xml_string1 = Tk::XMLViewer::DumpXML($text_widget);
     $xml_string2 = $xmlviewer->DumpXML;
+
+=head1 BUGS
+
+Unicode is not handled.
+
+DumpXML will not work with nested text tags.
 
 =head1 AUTHOR
 
