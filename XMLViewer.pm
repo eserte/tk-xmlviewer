@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.13 2000/07/29 01:17:05 eserte Exp $
+# $Id: XMLViewer.pm,v 1.14 2000/08/20 19:58:51 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -183,7 +183,6 @@ sub EndTag {
 
  	$curr_w->imageCreate("$tag_start",
  			     -image => $curr_w->{'MinusImage'});
-	$curr_w->tagAdd("plus", $tag_start);
  	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
  	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
  	$curr_w->tagBind("plus" . $region_count,
@@ -293,6 +292,7 @@ sub ShowToDepth {
     }
 }
 
+# XXXX hmmmm.... braucht noch Arbeit....
 sub CloseSelectedRegion {
     my $w = shift;
     return unless $w->tagRanges("sel");
@@ -301,37 +301,25 @@ sub CloseSelectedRegion {
     my $end_region;
 
     # find beginning
-    while(1) {
-	my($t1,$t2) = $w->tagPrevrange("plus", $w->index("sel.first"));
-	if (!defined $t1) {
-	    $begin_region = 0;
+    my(@tags) = $w->tagNames("sel.first");
+warn "@tags";
+    foreach my $tag (@tags) {
+warn $tag;
+	if ($tag =~ /^region(\d+)/) {
+	    $begin_region = $1;
 	    last;
 	}
-	my(@tags) = $w->tagNames($t1);
-	foreach my $tag (@tags) {
-	    if ($tag =~ /^plus(\d+)/) {
-		$begin_region = $1;
-		last;
-	    }
-	}
-	last; #XXX
     }
 
     # find end
-    while(1) {
-	my($t1,$t2) = $w->tagNextrange("plus", $w->index("sel.last"));
-	if (!defined $t1) {
-	    $end_region = $w->{RegionCount}-1;
+    my(@tags) = $w->tagNames("sel.last");
+warn "@tags";
+    foreach my $tag (@tags) {
+warn $tag;
+	if ($tag =~ /^region(\d+)/) {
+	    $end_region = $1;
 	    last;
 	}
-	my(@tags) = $w->tagNames($t1);
-	foreach my $tag (@tags) {
-	    if ($tag =~ /^plus(\d+)/) {
-		$end_region = $1-1;
-		last;
-	    }
-	}
-	last; #XXX
     }
 
     if (defined $begin_region and defined $end_region) {
