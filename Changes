@@ -1,5 +1,9 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.15
+	- revert usage of ProtocolEncoding => 'UTF-8'
+	- Open URL feature in tkxmlview
+
 0.14
 	- using ProtocolEncoding => 'UTF-8'
 	- new options -tagcolor, -attrkeycolor, -attrvalcolor, -commentcolor
