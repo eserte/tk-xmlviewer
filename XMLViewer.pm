@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.24 2001/04/29 09:10:30 eserte Exp $
+# $Id: XMLViewer.pm,v 1.25 2001/11/10 16:24:15 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -68,6 +68,7 @@ sub insertXML {
     $w->Busy();
     my(%args) = @_;
     my $p1 = new XML::Parser(Style => "Stream",
+			     ProtocolEncoding => 'UTF-8',
 			     Handlers => {
   				 Comment => \&hComment,
   				 XMLDecl => \&hDecl,
@@ -420,40 +421,41 @@ sub XMLMenu {
     }
 }
 
-if ($] >= 5.006001) {
-    # tr translator for unicode not available anymore
-    eval <<'EOF';
-sub _convert_from_unicode {
-    pack("C*", unpack("U*", $_[0]));
-}
-EOF
-} elsif ($] >= 5.006) {
-    # unicode translator available
-    eval <<'EOF';
-sub _convert_from_unicode {
-    $_[0] =~ tr/\0-\x{FF}//UC;
-    $_[0];
-}
-EOF
-} else {
-    # try Unicode::String
-    eval <<'EOF';
-require Unicode::String;
-EOF
-    if (!$@) {
-	eval <<'EOF';
-sub _convert_from_unicode {
-    my $umap = Unicode::String::utf8( $_[0]);
-    $umap->latin1;
-}
-EOF
-    } else { # do nothing
-        eval <<'EOF';
-require Unicode::String;
 sub _convert_from_unicode { $_[0] }
-EOF
-    }
-}
+#  if ($] >= 5.006001) {
+#      # tr translator for unicode not available anymore
+#      eval <<'EOF';
+#  sub _convert_from_unicode {
+#      pack("C*", unpack("U*", $_[0]));
+#  }
+#  EOF
+#  } elsif ($] >= 5.006) {
+#      # unicode translator available
+#      eval <<'EOF';
+#  sub _convert_from_unicode {
+#      $_[0] =~ tr/\0-\x{FF}//UC;
+#      $_[0];
+#  }
+#  EOF
+#  } else {
+#      # try Unicode::String
+#      eval <<'EOF';
+#  require Unicode::String;
+#  EOF
+#      if (!$@) {
+#  	eval <<'EOF';
+#  sub _convert_from_unicode {
+#      my $umap = Unicode::String::utf8( $_[0]);
+#      $umap->latin1;
+#  }
+#  EOF
+#      } else { # do nothing
+#          eval <<'EOF';
+#  require Unicode::String;
+#  sub _convert_from_unicode { $_[0] }
+#  EOF
+#      }
+#  }
 
 sub SourceType    { $_[0]->{Source} && $_[0]->{Source}[0] }
 sub SourceContent { $_[0]->{Source} && $_[0]->{Source}[1] }
