@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.20 2000/08/20 20:54:36 eserte Exp $
+# $Id: XMLViewer.pm,v 1.21 2000/08/23 23:26:51 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,11 +25,10 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 
-my($curr_w); # XXXXX!
+my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $indent_width = 32;
-my %xmlinfo;
 
 sub SetIndent {
     my $w = shift;
@@ -57,6 +56,7 @@ sub InitObject {
 		     );
     $w->{IndentTags}  = [];
     $w->{RegionCount} = 0;
+    $w->{XmlInfo}     = {};
 
     # XXX warum parent?
     $w->{PlusImage}  = $w->parent->Pixmap(-id => 'plus');
@@ -67,10 +67,12 @@ sub insertXML {
     my $w = shift;
     $w->Busy();
     my(%args) = @_;
-    my $p1 = new XML::Parser(Style => "Stream", Handlers => {
-                                        Comment => \&hComment,
-                                        XMLDecl => \&hDecl,
-                                        Doctype => \&hDoctype});
+    my $p1 = new XML::Parser(Style => "Stream",
+			     Handlers => {
+				 Comment => \&hComment,
+				 XMLDecl => \&hDecl,
+				 Doctype => \&hDoctype,
+			     });
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
@@ -120,14 +122,14 @@ sub insertXML {
 sub hDoctype {
     my $exp = shift;
     foreach my $i (qw(Name Sysid Pubid Internal)) {
-	$xmlinfo{$i} = shift;
+	$curr_w->{XmlInfo}{$i} = shift;
     }
 }
 
 sub hDecl {
     my $exp = shift;
     foreach my $i (qw(Version Encoding Standalone)) {
-	$xmlinfo{$i} = shift;
+	$curr_w->{XmlInfo}{$i} = shift;
     }
 }
 
@@ -209,12 +211,13 @@ sub hComment {
  			     -image => $curr_w->{'MinusImage'});
 	$curr_w->tagAdd("plus" . $region_count,
  			$tag_start);
+	my $ww = $curr_w;
 	$curr_w->tagBind("plus" . $region_count,
- 			 '<1>' => [$curr_w, 'ShowHideRegion', $region_count]);
+ 			 '<1>' => [$ww, 'ShowHideRegion', $region_count]);
 	$curr_w->tagBind("plus" . $region_count,
- 			 '<Enter>' => sub { $curr_w->configure(-cursor => 'hand2') });
+ 			 '<Enter>' => sub { $ww->configure(-cursor => 'hand2') });
 	$curr_w->tagBind("plus" . $region_count,
- 			 '<Leave>' => sub { $curr_w->configure(-cursor => 'left_ptr') });
+ 			 '<Leave>' => sub { $ww->configure(-cursor => 'left_ptr') });
 	$curr_w->{RegionCount}++;
     }
 }
@@ -241,12 +244,13 @@ sub EndTag {
  			     -image => $curr_w->{'MinusImage'});
  	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
  	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
+	my $ww = $curr_w;
  	$curr_w->tagBind("plus" . $region_count,
- 			 '<1>' => [$curr_w, 'ShowHideRegion', $region_count]);
+ 			 '<1>' => [$ww, 'ShowHideRegion', $region_count]);
  	$curr_w->tagBind("plus" . $region_count,
- 			 '<Enter>' => sub { $curr_w->configure(-cursor => 'hand2') });
+ 			 '<Enter>' => sub { $ww->configure(-cursor => 'hand2') });
  	$curr_w->tagBind("plus" . $region_count,
- 			 '<Leave>' => sub { $curr_w->configure(-cursor => 'left_ptr') });
+ 			 '<Leave>' => sub { $ww->configure(-cursor => 'left_ptr') });
 	$curr_w->{RegionCount}++;
 	$curr_w->insert("end", "\n");
     }
@@ -459,18 +463,18 @@ sub Showinfo {
     my $textbox = $d->add("Scrolled", qw/ROText -wrap none -width 60
 			  -height 5 -scrollbars osw -background white/);
     $textbox->pack(qw/-side left -expand yes -fill both/);
-    if (keys %xmlinfo) {
+    if (keys %{ $w->{XmlInfo} }) {
 	my $message = "XMLDecl: " ;
 	foreach my $i (qw(Version Encoding Standalone)) {
-	    if (defined $xmlinfo{$i}) {
-		$message = $message . $i . ": " . $xmlinfo{$i} . " \n  ";
+	    if (defined $w->{XmlInfo}{$i}) {
+		$message = $message . $i . ": " . $w->{XmlInfo}{$i} . " \n  ";
 	    }
 	}
 	$textbox->insert("end", $message);
 	$message = "\nDOCTYPE: ";
 	foreach my $i (qw(Name Sysid Pubid Internal)) {
-	    if (defined $xmlinfo{$i}) {
-		$message = $message . $xmlinfo{$i} . " \n  ";
+	    if (defined $w->{XmlInfo}{$i}) {
+		$message = $message . $w->{XmlInfo}{$i} . " \n  ";
 	    }
 	}
 	$textbox->insert("end", $message);
@@ -482,6 +486,8 @@ sub Showinfo {
     my $button = $d->Show;
     $w->Unbusy();
 }
+
+sub GetInfo { $_[0]->{XmlInfo} }
 
 1;
 
