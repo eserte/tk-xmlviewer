@@ -1,5 +1,10 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.09
+	- limited Unicode handling
+	- fixed numerous bugs
+	- new methods: DumpXML, ShowToDepth, XMLMenu, OpenDepth
+
 0.01  Tue Jan 18 13:19:26 2000
 	- original version; created by h2xs 1.19
 
