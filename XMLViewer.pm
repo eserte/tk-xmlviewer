@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.32 2003/08/01 13:26:00 eserte Exp $
+# $Id: XMLViewer.pm,v 1.33 2003/11/12 20:46:13 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003 Slaven Rezic. All rights reserved.
@@ -29,6 +29,7 @@ $VERSION = '0.16';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $indent_width = 32;
+my $use_elide = $Tk::VERSION < 800 || $Tk::VERSION == 804.025;
 
 sub SetIndent {
     my $w = shift;
@@ -272,24 +273,24 @@ sub ShowHideRegion {
     my(@old_tags) = $w->tagNames("showhidemarkbegin");
     $w->delete("showhidemarkbegin", "showhidemarkend");
     if (!exists $args{-open}) {
-	if ($Tk::VERSION > 800) {
-	    $args{-open} = $w->tagCget("region" . $region, '-state') eq 'hidden';
-	} else {
+	if ($use_elide) {
 	    $args{-open} = $w->tagCget("region" . $region, '-elide');
+	} else {
+	    $args{-open} = $w->tagCget("region" . $region, '-state') eq 'hidden';
 	}
     }
     if ($args{-open}) {
 	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'MinusImage'});
 	$w->tagConfigure("region" . $region,
-			 $Tk::VERSION > 800 ? (-state => '')
-			                    : (-elide => undef));
+			 $use_elide ? (-elide => undef)
+			            : (-state => ''));
     } else {
 	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'PlusImage'});
 	$w->tagConfigure("region" . $region,
-			 $Tk::VERSION > 800 ? (-state => 'hidden')
-			                    : (-elide => 1));
+			 $use_elide ? (-elide => 1)
+			            : (-state => 'hidden'));
     }
     # restore old tags for minus/plus image
     foreach my $tag (@old_tags) {

@@ -4,6 +4,7 @@ Revision history for Perl extension Tk::XMLViewer.
 	- tkxmlview uses Tk::HistEntry if available
 	- Win32 compat fix for tkxmlview
 	- can handle unicode with Tk804
+	- fix for -elide/-state confusion
 
 0.15
 	- revert usage of ProtocolEncoding => 'UTF-8'
