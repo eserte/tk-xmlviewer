@@ -2,9 +2,13 @@ Revision history for Perl extension Tk::XMLViewer.
 
 0.14
 	- using ProtocolEncoding => 'UTF-8'
+	- new options -tagcolor, -attrkeycolor, -attrvalcolor, -commentcolor
+	- documented use of tagConfigure
 
 0.13
 	- unicode compatibility with perl 5.7.0 and perl 5.6.1
+	  NOTE: older versions of Tk::XMLViewer will not work with perl 5.6.1
+                or newer!
 
 0.12
 	- pod additions
