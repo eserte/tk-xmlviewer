@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.23 2000/09/03 01:30:46 eserte Exp $
+# $Id: XMLViewer.pm,v 1.24 2001/04/29 09:10:30 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -69,10 +69,10 @@ sub insertXML {
     my(%args) = @_;
     my $p1 = new XML::Parser(Style => "Stream",
 			     Handlers => {
-				 Comment => \&hComment,
-				 XMLDecl => \&hDecl,
-				 Doctype => \&hDoctype,
-			     });
+  				 Comment => \&hComment,
+  				 XMLDecl => \&hDecl,
+  				 Doctype => \&hDoctype,
+  			     });
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
@@ -242,8 +242,8 @@ sub EndTag {
 
  	$curr_w->imageCreate("$tag_start",
  			     -image => $curr_w->{'MinusImage'});
- 	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
- 	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
+	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
+	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
 	my $ww = $curr_w;
  	$curr_w->tagBind("plus" . $region_count,
  			 '<1>' => [$ww, 'ShowHideRegion', $region_count]);
@@ -399,7 +399,7 @@ warn $tag;
 
 sub XMLMenu {
     my $w = shift;
-    if ($Tk::VERSION >= 800.015) {
+    if ($w->can("menu")) {
 	my $textmenu = $w->menu;
 	my $xmlmenu = $textmenu->cascade(-tearoff => 0,
 					 -label => "XML");
@@ -420,7 +420,7 @@ sub XMLMenu {
     }
 }
 
-if ($] >= 5.007) {
+if ($] >= 5.006001) {
     # tr translator for unicode not available anymore
     eval <<'EOF';
 sub _convert_from_unicode {
@@ -510,7 +510,7 @@ Tk::XMLViewer - Tk widget to display XML
   use Tk::XMLViewer;
   $xmlviewer = $top->XMLViewer->pack;
   $xmlviewer->insertXML(-file => "test.xml");
-  $xmlviewer->insertXML(-text => "<?xml?><a><bla /><foo>bar</foo></a>");
+  $xmlviewer->insertXML(-text => '<?xml version="1.0" encoding="ISO-8859-1" ?><a><bla /><foo>bar</foo></a>');
 
 =head1 DESCRIPTION
 
