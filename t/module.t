@@ -27,6 +27,7 @@ $top = new MainWindow;
 $xmlwidget = $top->Scrolled('XMLViewer',
 			    -scrollbars => "osoe")->pack;
 $xmlwidget->insertXML(-file => $file);
+$xmlwidget->XMLMenu;
 
 $top->bind("<P>" => sub {
     require Config;
@@ -36,12 +37,16 @@ $top->bind("<P>" => sub {
 
 $depth=10;
 $f=$top->Frame->pack;
-$f->Button(-text => "Depth",
-	   -command => sub {
-	       $xmlwidget->OpenDepth($depth);
-	   })->pack(-side => "left");
+$f->Label(-text => "Depth",
+	 #  -command => sub {
+	 #      $xmlwidget->ShowToDepth($depth);
+	 #  }
+	 )->pack(-side => "left");
 $f->Scale(-variable => \$depth,
 	  -from => 1,
+	  -command => sub {
+	      $xmlwidget->ShowToDepth($depth);
+	  },
 	  -to => 10,
 	  -orient => 'horiz')->pack(-side => "left");
 $f->Button(-text => "Dump Tk::Text as XML",
@@ -52,6 +57,7 @@ $f->Button(-text => "Dump Tk::Text as XML",
 	       $xmlwidget2 = $t->Scrolled('XMLViewer',
 					  -scrollbars => "osoe")->pack;
 	       $xmlwidget2->insertXML(-text => $s);
+	       $xmlwidget2->XMLMenu;
 	   })->pack(-side => "left");
 $f->Button(-text => "OK",
 	   -command => sub { $not = ""; })->pack(-side => "left");
