@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.6 2000/01/19 15:09:36 eserte Exp $
+# $Id: XMLViewer.pm,v 1.7 2000/01/19 15:58:42 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
@@ -84,7 +84,7 @@ sub _indenttag {
 sub _flush {
     my $w = shift;
     if ($w->{PendingEnd}) {
-	$w->insert("end", ">\n");
+	$w->insert("end", ">", 'xml_tag', "\n");
 	$w->{PendingEnd} = 0;
 	my $indent = $w->{Indent}-1;
 	$w->markSet('regionstart' . $indent, $w->index("end - 1 chars"));
@@ -95,8 +95,7 @@ sub _flush {
 sub StartTag {
     $curr_w->_flush;
     my $start = $curr_w->index("end - 1 chars");
-    $curr_w->insert("end", "<", "",
-		    $_[1], 'xml_tag');
+    $curr_w->insert("end", "<$_[1]", 'xml_tag');
     if (%_) {
 	$curr_w->insert("end", " ");
 	my $need_space = 0;
@@ -134,7 +133,7 @@ sub EndTag {
     $curr_w->{Indent} --;
 
     if ($curr_w->{PendingEnd}) {
-	$curr_w->insert("end", " />\n");
+	$curr_w->insert("end", " />", 'xml_tag', "\n");
 	$curr_w->{PendingEnd} = 0;
     } else {
 	my $region_start = $curr_w->index('regionstart' . $curr_w->{Indent});
@@ -156,8 +155,7 @@ sub EndTag {
  	$curr_w->tagAdd($curr_w->_indenttag,
  			$tag_start);
  	$curr_w->tagBind("plus" . $region_count,
- 			 '<1>' => [$curr_w, '_show_hide_region',
-				   $region_count, $curr_w->{'Indent'}]);
+ 			 '<1>' => [$curr_w, 'ShowHideRegion', $region_count]);
  	$curr_w->tagBind("plus" . $region_count,
  			 '<Enter>' => sub { $curr_w->configure(-cursor => 'hand2') });
  	$curr_w->tagBind("plus" . $region_count,
@@ -167,8 +165,8 @@ sub EndTag {
     }
 }
 
-sub _show_hide_region {
-    my($w, $region, $indent) = @_;
+sub ShowHideRegion {
+    my($w, $region, %args) = @_;
     $w->markSet("showhidemarkbegin", "plus" . $region . ".first");
     $w->markGravity("showhidemarkbegin", "left");
     $w->markSet("showhidemarkend", "plus" . $region . ".first + 1 chars");
@@ -176,7 +174,10 @@ sub _show_hide_region {
     # remember tags for restore
     my(@old_tags) = $w->tagNames("showhidemarkbegin");
     $w->delete("showhidemarkbegin", "showhidemarkend");
-    if ($w->tagCget("region" . $region, -elide)) {
+    if (!exists $args{-open}) {
+	$args{-open} = $w->tagCget("region" . $region, -elide);
+    }
+    if ($args{-open}) {
 	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'MinusImage'});
 	$w->tagConfigure("region" . $region, -elide => undef);
@@ -227,33 +228,71 @@ sub DumpXML {
     $out;
 }
 
+sub OpenDepth {
+    my($w, $depth) = @_;
+    my($begin, $end) = ("1.0");
+    while(1) {
+	($begin, $end) = $w->tagNextrange('xml_indent' . $depth, $begin);
+	last if $begin eq '';
+	my(@tags) = $w->tagNames($begin);
+	my $region;
+	foreach my $tag (@tags) {
+	    if ($tag =~ /^region(\d+)/) {
+		$region = $1;
+		last;
+	    }
+	}
+	next if !defined $region;
+	$w->ShowHideRegion($region, -open => 0);
+	$begin = "$end + 1 chars";
+    }
+}
+
 1;
 __END__
 # Below is the stub of documentation for your module. You better edit it!
 
 =head1 NAME
 
-Tk::XMLViewer - Perl extension for blah blah blah
+Tk::XMLViewer - Tk widget to display XML
 
 =head1 SYNOPSIS
 
   use Tk::XMLViewer;
-  blah blah blah
+  $xmlviewer = $top->XMLViewer->pack;
+  $xmlviewer->insertXML(-file => "test.xml");
+  $xmlviewer->insertXML(-text => "<?xml?><a><bla /><foo>bar</foo></a>");
 
 =head1 DESCRIPTION
 
-Stub documentation for Tk::XMLViewer was created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
+Tk::XMLViewer is an widget inherited from Tk::Text which displays XML
+in a hierarchical tree. You can use the plus and minus buttons to
+hide/show parts of the tree.
 
-Blah blah blah.
+=head1 METHODS
+
+=over 4
+
+=item insertXML
+
+Insert XML into the XMLViewer widget. Use the -file argument to insert
+a file and -text to insert an XML string.
+
+=item DumpXML
+
+Dump the contents of an Tk::Text widget into an XML string, which can
+be used as input for the XMLViewer widget. Use the static variant for
+Tk::Text widgets and the method for XMLViewer widgets.
+
+    $xml_string1 = Tk::XMLViewer::DumpXML($text_widget);
+    $xml_string2 = $xmlviewer->DumpXML;
 
 =head1 AUTHOR
 
-A. U. Thor, a.u.thor@a.galaxy.far.far.away
+Slaven Rezic, <eserte@cs.tu-berlin.de>
 
 =head1 SEE ALSO
 
-perl(1).
+XML::Parser(3), Tk::Text(3).
 
 =cut
