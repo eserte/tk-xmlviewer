@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.26 2001/11/10 16:26:43 eserte Exp $
+# $Id: XMLViewer.pm,v 1.27 2002/02/28 20:32:00 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -20,7 +20,7 @@ require Tk::Pixmap;
 use strict;
 use vars qw($VERSION);
 
-use base qw(Tk::ROText);
+use base qw(Tk::Derived Tk::ROText);
 use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
@@ -36,23 +36,29 @@ sub SetIndent {
     $indent_width = $arg;
 }
 
-sub InitObject {
+sub Populate {
     my($w,$args) = @_;
-    $w->SUPER::InitObject($args);
+    $w->SUPER::Populate($args);
     $w->configure(-wrap   => 'word',
 		  -cursor => 'left_ptr');
+
+    my $tagcolor     = delete $args->{-tagcolor}     || 'red';
+    my $attrkeycolor = delete $args->{-attrkeycolor} || 'green4';
+    my $attrvalcolor = delete $args->{-attrvalcolor} || 'DarkGreen';
+    my $commentcolor = delete $args->{-commentcolor} || 'gold2';
+
     $w->tagConfigure('xml_tag',
-		     -foreground => 'red',
+		     -foreground => $tagcolor,
 		     #-font => 'boldXXX',
 		     );
     $w->tagConfigure('xml_attrkey',
-		     -foreground => 'green4',
+		     -foreground => $attrkeycolor,
 		     );
     $w->tagConfigure('xml_attrval',
-		     -foreground => 'DarkGreen',
+		     -foreground => $attrvalcolor,
 		     );
     $w->tagConfigure('xml_comment',
-		     -foreground => 'gold2',
+		     -foreground => $commentcolor,
 		     );
     $w->{IndentTags}  = [];
     $w->{RegionCount} = 0;
@@ -520,7 +526,41 @@ Tk::XMLViewer is an widget inherited from Tk::Text which displays XML
 in a hierarchical tree. You can use the plus and minus buttons to
 hide/show parts of the tree.
 
-=head1 METHODS
+=head2 OPTIONS
+
+C<Tk::XMLViewer> supports all option of C<Tk::Text> and additionally
+the following:
+
+=over
+
+=item -tagcolor => $color
+
+Foreground color of tags.
+
+=item -attrkeycolor => $color
+
+Foreground color of attribute keys.
+
+=item -attrvalcolor => $color
+
+Foreground color of attribute values.
+
+=item -commentcolor => $color
+
+Foreground color of comment sections.
+
+=back
+
+The text tags C<xml_tag>, C<xml_attrkey>, C<xml_attrval>, and
+C<xml_comment> are defined for the corresponding XML elements. If you
+want to customize further you can configure the tags directly, for
+example:
+
+    $xmlviewer->tagConfigure('xml_comment', -foreground => "white",
+			     -background => "red", -font => "Helvetica 6");
+
+
+=head2 METHODS
 
 =over 4
 
