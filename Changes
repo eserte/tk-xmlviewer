@@ -1,5 +1,11 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.17
+	- -loaddtd option for tkxmlview
+	- Pod for tkxmlview
+	- -xmlparserargs option for insertXML
+	- fix for Tk804.026
+
 0.16
 	- tkxmlview uses Tk::HistEntry if available
 	- Win32 compat fix for tkxmlview
