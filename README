@@ -10,6 +10,8 @@ To install, type
 
 	$ perl Makefile.PL
 	$ make
+	$ make test
+	$ make demo
 	$ make install
 
 Additional requirements:
@@ -22,6 +24,8 @@ To install with ActiveState Perl type
 
 	$ perl Makefile.PL
 	$ nmake
+	$ nmake test
+	$ nmake demo
 	$ nmake install
 
 If there are modules missing use the prereqinst script with the -ppm
@@ -29,7 +33,8 @@ option:
 
 	$ perl prereqinst.pl -ppm
 
-Included is also a standalone program for viewing XML files: tkxmlview.
+Also included is a standalone program for viewing XML files:
+tkxmlview.
 
-Send bug reports, comments and suggestions to slaven@rezic.de
+Send bug reports, patches, comments and suggestions to slaven@rezic.de
 
