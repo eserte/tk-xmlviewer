@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.16 2000/08/20 20:17:51 eserte Exp $
+# $Id: XMLViewer.pm,v 1.17 2000/08/20 20:22:41 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -526,9 +526,10 @@ Tk::Text widgets and the method for XMLViewer widgets.
 
 =head1 BUGS
 
-Unicode is not handled at all for perl before 5.6.0. For recent perls,
-unicode characters are translated to ISO-8859-1 --- Perl/Tk does not
-support Unicode, yet.
+Perl/Tk does not support Unicode, yet. For perl 5.6.0 and newer,
+unicode characters are translated to ISO-8859-1 chars, if possible.
+For older perls, there is no conversion (unless Unicode::String is
+installed), so unicode characters will show as binary values.
 
 DumpXML will not work with nested text tags.
 
