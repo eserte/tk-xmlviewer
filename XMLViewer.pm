@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.5 2000/01/19 13:57:44 eserte Exp $
+# $Id: XMLViewer.pm,v 1.6 2000/01/19 15:09:36 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 my($curr_w); # XXXXX!
 my $indent_width = 32;
@@ -46,8 +46,6 @@ sub InitObject {
 		     -foreground => 'DarkGreen',
 		     );
     $w->{IndentTags}  = [];
-#    $w->{RegionStart} = [];
-#    $w->{TagStart}    = [];
     $w->{RegionCount} = 0;
 
     # XXX warum parent?
@@ -57,12 +55,16 @@ sub InitObject {
 
 sub insertXML {
     my $w = shift;
-    my $file = shift;
+    my(%args) = @_;
     my $p1 = new XML::Parser(Style => "Stream");
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
-    $p1->parsefile($file);
+    if ($args{-file}) {
+	$p1->parsefile($args{-file});
+    } else {
+	$p1->parse($args{-text});
+    }
     $w->_flush;
 }
 
@@ -167,22 +169,62 @@ sub EndTag {
 
 sub _show_hide_region {
     my($w, $region, $indent) = @_;
-    my $index = $w->index("plus" . $region . ".first");
-    $w->delete("plus" . $region . ".first",
-	       "plus" . $region . ".last");
+    $w->markSet("showhidemarkbegin", "plus" . $region . ".first");
+    $w->markGravity("showhidemarkbegin", "left");
+    $w->markSet("showhidemarkend", "plus" . $region . ".first + 1 chars");
+    $w->markGravity("showhidemarkend", "right");
+    # remember tags for restore
+    my(@old_tags) = $w->tagNames("showhidemarkbegin");
+    $w->delete("showhidemarkbegin", "showhidemarkend");
     if ($w->tagCget("region" . $region, -elide)) {
-	$w->imageCreate($index,
+	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'MinusImage'});
 	$w->tagConfigure("region" . $region, -elide => undef);
     } else {
-	$w->imageCreate($index,
+	$w->imageCreate("showhidemarkbegin",
 			-image => $w->{'PlusImage'});
 	$w->tagConfigure("region" . $region, -elide => 1);
     }
-    $w->tagAdd("plus" . $region, $index);
-    $w->tagAdd($w->_indenttag($indent),
-	       $index);
+    # restore old tags for minus/plus image
+    foreach my $tag (@old_tags) {
+	$w->tagAdd($tag, "showhidemarkbegin");
+    }
+}
 
+sub DumpXML {
+    my($w) = @_;
+    my(@dump) = $w->dump("1.0", "end");
+    my $out = "<?xml version='1.0' encoding='ISO-8859-1' ?>";
+    $out .= "<perltktext>";
+    for(my $i=0; $i<=$#dump; $i++) {
+	my $x = $dump[$i];
+	if ($x eq 'tagon') {
+	    $out .= "<tag name='" . $dump[$i+1] . "'>\n";
+	    $i+=2;
+	} elsif ($x eq 'tagoff') {
+	    $out .= "</tag>\n";
+	    $i+=2;
+	} elsif ($x eq 'image') {
+	    $out .= "<image name='" . $dump[$i+1] . "' />\n";
+	    $i+=2;
+	} elsif ($x eq 'text') {
+	    $dump[$i+1] =~ s/&/&amp;/g;
+	    $dump[$i+1] =~ s/</&lt;/g;
+	    $dump[$i+1] =~ s/>/&gt;/g;
+	    $out .= $dump[$i+1];
+	    $i+=2;
+	} elsif ($x eq 'mark') {
+	    $out .= "<mark name='" . $dump[$i+1] . "' />\n";
+	    $i+=2;
+	} else {
+	    warn "Unknown type $x";
+	    $i+=2;
+	}
+	
+	
+    }
+    $out .= "</perltktext>";
+    $out;
 }
 
 1;
