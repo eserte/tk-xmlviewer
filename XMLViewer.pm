@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.27 2002/02/28 20:32:00 eserte Exp $
+# $Id: XMLViewer.pm,v 1.28 2002/02/28 20:37:44 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000 Slaven Rezic. All rights reserved.
@@ -571,11 +571,19 @@ a file and -text to insert an XML string.
 
 =item DumpXML
 
-Dump the contents of an Tk::Text widget into an XML string, which can
-be used as input for the XMLViewer widget. Use the static variant for
-Tk::Text widgets and the method for XMLViewer widgets.
+Dump the contents of an C<Tk::Text> widget into an XML string. This is
+meant as a alternative to the C<Tk::Text::dump> method (in fact,
+C<DumpXML> is implemented with the help of C<dump>).
+
+The output of C<DumpXML> can be used as input for the XMLViewer
+widget, which is useful in debugging C<Tk::Text> tags.
+
+Use the static variant of C<DumpXML> for C<Tk::Text> widgets and the
+method variant for C<XMLViewer> widgets.
 
     $xml_string1 = Tk::XMLViewer::DumpXML($text_widget);
+    $xmlviewer_widget->insertXML($xml_string1);
+
     $xml_string2 = $xmlviewer->DumpXML;
 
 =item SetIndent
