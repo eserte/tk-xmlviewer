@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: tkxmlview,v 1.3 2000/02/28 23:24:28 eserte Exp $
+# $Id: tkxmlview,v 1.4 2000/07/29 00:27:15 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2000 Slaven Rezic. All rights reserved.
@@ -15,6 +15,7 @@
 
 use Tk;
 use Tk::XMLViewer;
+
 $top = new MainWindow;
 my $file = shift;
 $xmlviewer = $top->Scrolled("XMLViewer")->pack(-expand => 1, -fill => "both");
@@ -25,6 +26,41 @@ if ($Tk::VERSION >= 800.015) {
 	my $filemenu = $textmenu->entrycget(0, -menu);
 	$filemenu->command(-label => 'Open',
 			   -command => sub { openxml(); viewxml() });
+	$filemenu->command(-label => 'Re-Open',
+			   -command => sub { 
+			       if ($xmlviewer->SourceType eq 'file'){
+				   viewxml();
+			       }
+			   });
+
+	my $editmenu = $textmenu->entrycget(1, -menu);
+	$editmenu->separator;
+	$editmenu->command
+	    (-label => 'Edit file...',
+	     -command => sub {
+		 require Tk::TextEdit;
+		 package Tk::TextEdit;
+		 sub Save {
+		     my $self = shift;
+		     my $r = $self->SUPER::Save(@_);
+		     main::viewxml();
+		     $r;
+		 }
+
+		 package main;
+		 my $top_editor = $top->Toplevel;
+		 $top_editor->title("Edit $file");
+		 my $editor = $top_editor->Scrolled
+		     ('TextEdit',
+		      -scrollbars => "osoe",
+		      -wrap => "none",
+		     )->pack;
+		 # XXX workaround bug in 3.004
+		 $editor->SetGUICallbacks([]);
+		 $editor->FileName($file);
+		 $editor->Load;
+	     });
+
 	my $helpmenu = $textmenu->cascade(-tearoff => 0,
 					  -label => 'Help');
 	$helpmenu->command(-label => 'About',
