@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: tkxmlview,v 1.1 2000/01/19 16:26:39 eserte Exp $
+# $Id: tkxmlview,v 1.2 2000/01/24 11:15:06 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2000 Slaven Rezic. All rights reserved.
@@ -24,6 +24,22 @@ if ($Tk::VERSION >= 800.015) {
 	my $filemenu = $textmenu->entrycget(0, -menu);
 	$filemenu->command(-label => 'Open',
 			   -command => sub { openxml(); viewxml() });
+	my $helpmenu = $textmenu->cascade(-tearoff => 0,
+					  -label => 'Help');
+	$helpmenu->command(-label => 'About',
+			   -command => sub {
+			       $top->messageBox
+				   (-title   => 'About tkxmlview',
+				    -message => "An XML viewer for Perl/Tk\n" .
+				                "(c) 2000 by Slaven Rezic",
+				    -type    => 'OK');
+			   });
+	$helpmenu->command(-label => 'Tk::XMLViewer POD',
+			   -command => sub {
+			       require Tk::Pod;
+			       $top->Pod(-file => 'Tk/XMLViewer',
+					 -title => 'Tk::XMLViewer POD');
+			   });
     }
 }
 if (!defined $file) {
