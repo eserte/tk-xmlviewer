@@ -1,32 +1,19 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
-######################### We start with some black magic to print on failure.
-
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
-
-BEGIN { $^W = 1; $| = 1; print "1..9\n"; }
-END {print "not ok 1\n" unless $loaded;}
 use Tk;
 use Tk::XMLViewer;
 use XML::Parser;
 use FindBin;
 use Getopt::Long;
-$loaded = 1;
-my $ok = 1;
-print "ok " . $ok++ . "\n";
+use Test::More tests => 10;
 
 my $demo = 0;
 GetOptions("demo!" => \$demo) or die "usage!";
 
-######################### End of black magic.
-
-# Insert your test code below (better if it prints "ok 13"
-# (correspondingly "not ok 13") depending on the success of chunk 13
-# of the test code):
-
-$file = "$FindBin::RealBin/test.xml";
+my $use_unicode = ($Tk::VERSION >= 803); # unicode enabled
+if ($use_unicode) {
+    $file = "$FindBin::RealBin/testutf8.xml";
+} else {
+    $file = "$FindBin::RealBin/test.xml";
+}
 
 $top = new MainWindow;
 $t2 = $top->Toplevel;
@@ -35,6 +22,8 @@ $t2->withdraw;
 $xmlwidget = $top->Scrolled('XMLViewer',
 			    -tagcolor => 'blue',
 			    -scrollbars => "osoe")->pack;
+ok($xmlwidget);
+ok(UNIVERSAL::isa($xmlwidget->Subwidget("scrolled"), "Tk::XMLViewer"));
 
 $xmlwidget->tagConfigure('xml_comment', -foreground => "white",
 			 -background => "red", -font => "Helvetica 15");
@@ -43,10 +32,10 @@ $xmlwidget->insertXML(-file => $file);
 $xmlwidget->XMLMenu;
 
 my $xml_string1 = $xmlwidget->DumpXML;
-if ($xml_string1 eq '') { print "not " } print "ok ". $ok++ . "\n";
+isnt($xml_string1, '');
 
 my $xmlwidget2 = $t2->XMLViewer->pack;
-if (!$xmlwidget2->isa('Tk::XMLViewer')) {print "not "} print "ok ".$ok++."\n";
+ok($xmlwidget2->isa('Tk::XMLViewer'));
 
 $xmlwidget2->insertXML(-text => <<EOF);
 <?xml version="1.0" encoding="ISO-8859-1" ?>
@@ -64,16 +53,17 @@ $xmlwidget->OpenCloseDepth(1, 0);
 $xmlwidget->OpenCloseDepth(1, 1);
 $xmlwidget->ShowToDepth(0);
 $xmlwidget->ShowToDepth(undef);
-if (!defined &Tk::XMLViewer::_convert_from_unicode) {
-    print "not ";
-}
-print "ok " . $ok++ . "\n";
+ok(defined &Tk::XMLViewer::_convert_from_unicode);
 
 my %info = %{ $xmlwidget->GetInfo };
-if ($info{Version} ne "1.0")         { print "not " } print "ok ". $ok++ ."\n";
-if ($info{Encoding} ne "ISO-8859-1") { print "not " } print "ok ". $ok++ ."\n";
-if ($info{Name} ne "ecollateral")    { print "not " } print "ok ". $ok++ ."\n";
-if ($info{Sysid} ne "test.dtd")      { print "not " } print "ok ". $ok++ ."\n";
+is($info{Version}, "1.0");
+if ($use_unicode) {
+    is($info{Encoding}, "utf-8");
+} else {
+    is($info{Encoding}, "ISO-8859-1");
+}
+is($info{Name}, "ecollateral");
+is($info{Sysid}, "test.dtd");
 
 # definitions for interactive use...
 
@@ -124,4 +114,4 @@ $t2->destroy;
 
 #MainLoop;
 
-print "${not}ok " . $ok++ . "\n";
+is($not, "");
