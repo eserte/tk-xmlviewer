@@ -100,6 +100,9 @@ $f->Button(-text => "Not OK",
 
 $top->update;
 $top->waitVariable(\$not);
+
+$t2->destroy;
+
 #MainLoop;
 
 print "${not}ok " . $ok++ . "\n";
