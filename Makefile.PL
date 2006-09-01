@@ -10,6 +10,8 @@ WriteMakefile(
 	            'XML::Parser' => 0,
 		    ($] < 5.006 ? ('Unicode::String' => 0) : ()),
 	           },
+    'PM'	=> {'XMLViewer.pm'   => '$(INST_LIB)/Tk/XMLViewer.pm',
+		   },
     'dist'      => {'COMPRESS'=>'gzip -9f', 'SUFFIX' => '.gz',
                     'POSTOP'=>'-$(CHMOD) 644 $(DISTVNAME).tar$(SUFFIX)'},
     'EXE_FILES' => ['tkxmlview'],
