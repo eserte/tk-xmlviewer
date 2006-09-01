@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: script.t,v 1.1 2006/09/01 20:04:23 eserte Exp $
+# $Id: script.t,v 1.2 2006/09/01 20:08:20 eserte Exp $
 # Author: Slaven Rezic
 #
 
@@ -43,6 +43,7 @@ plan tests => scalar @opt;
 
 OPT:
 for my $opt (@opt) {
+    unshift @$opt, "-geometry", "+10+10";
     push @$opt, "$FindBin::RealBin/test.xml";
     my $pid = fork;
     if ($pid == 0) {
