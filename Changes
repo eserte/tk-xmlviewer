@@ -1,5 +1,13 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.18
+	- -showxpath option for tkxmlview
+	- BalloonInfo showing XPath information
+	- new menu item: XPath to Selection
+	- tkxmlview has now a standard menu
+	- file history in tkxmlview (for now the history is lost when
+	  quitting the application)
+
 0.17
 	- -loaddtd option for tkxmlview
 	- Pod for tkxmlview
