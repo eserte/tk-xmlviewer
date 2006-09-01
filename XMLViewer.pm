@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.34 2004/03/20 18:57:38 eserte Exp $
+# $Id: XMLViewer.pm,v 1.35 2006/09/01 20:13:12 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004 Slaven Rezic. All rights reserved.
@@ -25,9 +25,10 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.17';
+$VERSION = '0.18';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
+my $curr_xpath;
 my $indent_width = 32;
 my $use_elide = $Tk::VERSION < 800 || $Tk::VERSION >= 804.025;
 
@@ -167,10 +168,16 @@ sub _flush {
     }
 }
 
+sub StartDocument {
+    $curr_xpath = "";
+}
+
 sub StartTag {
     $curr_w->_flush;
     my $start = $curr_w->index("end - 1 chars");
-    $curr_w->insert("end", "<" . _convert_from_unicode($_[1]), 'xml_tag');
+    my $tagname = $_[1];
+    $curr_xpath .= "/" . $tagname;
+    $curr_w->insert("end", "<" . _convert_from_unicode($tagname), ['xml_tag', 'xpath_' . $curr_xpath]);
     if (%_) {
 	$curr_w->insert("end", " ");
 	my $need_space = 0;
@@ -181,7 +188,7 @@ sub StartTag {
 		$need_space++;
 	    }
 	    $curr_w->insert("end",
-			    _convert_from_unicode($k), "xml_attrkey",
+			    _convert_from_unicode($k), ["xml_attrkey", 'xpath_' . $curr_xpath . '/@' . $k],
 			    "=\"", "",
 			    _convert_from_unicode($v), "xml_attrval",
 			    "\"", "");
@@ -264,6 +271,8 @@ sub EndTag {
 	$curr_w->{RegionCount}++;
 	$curr_w->insert("end", "\n");
     }
+
+    $curr_xpath =~ s{/[^/]+$}{};
 }
 
 sub ShowHideRegion {
@@ -432,10 +441,48 @@ sub XMLMenu {
 	}
 	$depthmenu->command(-label => "Open all",
 			    -command => sub { $w->ShowToDepth(undef) });
+	$xmlmenu->command(-label => "XPath to Selection",
+			  -command => sub { $w->XPathToSelection });
 # XXX not yet:
 #	$xmlmenu->command(-label => "Close selected region",
 #			  -command => sub { $w->CloseSelectedRegion });
     }
+}
+
+sub XPathToSelection {
+    my($w) = @_;
+    my($X,$Y) = @{$w->{PostPosition}};
+    my $xpath = $w->GetXPathFromXY($X, $Y);
+    $w->SelectionOwn;
+    $w->SelectionHandle
+	(sub {
+	     my($offset, $maxbytes) = @_;
+	     substr($xpath, $offset, $maxbytes);
+	 });
+}
+
+sub PostPopupMenu {
+    my $w = shift;
+    my $X = shift;
+    my $Y = shift;
+    $w->{PostPosition} = [$X,$Y];
+    $w->SUPER::PostPopupMenu($X, $Y, @_);
+}
+
+sub BalloonInfo {
+    my($w,$balloon,$X,$Y,@opt) = @_;
+    $w->GetXPathFromXY($X, $Y);
+}
+
+sub GetXPathFromXY {
+    my($w, $X, $Y) = @_;
+    for my $tag ($w->tagNames('@'.($X-$w->rootx).','.($Y-$w->rooty))) {
+	if ($tag =~ m{^xpath_(.*)$}) {
+	    my $xpath = $1;
+	    return $xpath;
+	}
+    }
+    return '';
 }
 
 if ($Tk::VERSION >= 803) { # native unicode support
