@@ -1,5 +1,9 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.18_91
+	- massive speed improvement from large files by defering
+	  tagAdd calls
+
 0.18
 	- -showxpath option for tkxmlview
 	- BalloonInfo showing XPath information
