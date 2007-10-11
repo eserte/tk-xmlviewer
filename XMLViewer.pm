@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.35 2006/09/01 20:13:12 eserte Exp $
+# $Id: XMLViewer.pm,v 1.36 2007/10/11 20:28:08 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.18';
+$VERSION = '0.18_90';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $curr_xpath;
@@ -453,8 +453,16 @@ sub XPathToSelection {
     my($w) = @_;
     my($X,$Y) = @{$w->{PostPosition}};
     my $xpath = $w->GetXPathFromXY($X, $Y);
-    $w->SelectionOwn;
-    $w->SelectionHandle
+
+    # Define a dummy widget holding the selection, so we can still use
+    # the Text selection after using XPathToSelection
+    my $dummy = $w->Subwidget("DummyLabelForSelection");
+    if (!$dummy) {
+	$dummy = $w->Component("Label" => "DummyLabelForSelection");
+    }
+
+    $dummy->SelectionOwn;
+    $dummy->SelectionHandle
 	(sub {
 	     my($offset, $maxbytes) = @_;
 	     substr($xpath, $offset, $maxbytes);
