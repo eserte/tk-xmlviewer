@@ -1,10 +1,10 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.36 2007/10/11 20:28:08 eserte Exp $
+# $Id: XMLViewer.pm,v 1.37 2007/10/11 20:57:47 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright © 2000, 2003, 2004 Slaven Rezic. All rights reserved.
+# Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -25,12 +25,13 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.18_90';
+$VERSION = '0.18_91';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $curr_xpath;
 my $indent_width = 32;
 my $use_elide = $Tk::VERSION < 800 || $Tk::VERSION >= 804.025;
+my @tagAdds;
 
 sub SetIndent {
     my $w = shift;
@@ -87,6 +88,7 @@ sub insertXML {
     $w->{Indent} = 0;
     $w->{PendingEnd} = 0;
     $curr_w = $w;
+    @tagAdds=();
     eval {
 	if ($args{-file}) {
 	    $w->{Source} = ['file', $args{-file}];
@@ -126,6 +128,9 @@ sub insertXML {
 	}
     } else {
 	$w->_flush;
+	for (reverse @tagAdds) {
+	    $w->tagAdd(@$_);
+	}
     }
     $w->Unbusy();
 }
@@ -252,15 +257,20 @@ sub EndTag {
 	my $start = $curr_w->index("end - 1 chars");
 	$curr_w->insert("end", "</" . _convert_from_unicode($_[1]) .">",
 			'xml_tag');
-	$curr_w->tagAdd($curr_w->_indenttag, $start, "end");
-	my $region_count = $curr_w->{RegionCount};
-	$curr_w->tagAdd("region" . $region_count,
-			$region_start, $region_end);
+# 	$curr_w->tagAdd($curr_w->_indenttag, $start, "end");
+	push @tagAdds, [$curr_w->_indenttag, $start, "end"];
+ 	my $region_count = $curr_w->{RegionCount};
+# 	$curr_w->tagAdd("region" . $region_count,
+# 			$region_start, $region_end);
+	push @tagAdds, ["region" . $region_count,
+ 			$region_start, $region_end];
 
- 	$curr_w->imageCreate("$tag_start",
- 			     -image => $curr_w->{'MinusImage'});
-	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
-	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
+  	$curr_w->imageCreate("$tag_start",
+  			     -image => $curr_w->{'MinusImage'});
+# 	$curr_w->tagAdd("plus" . $region_count,	$tag_start);
+	push @tagAdds, ["plus" . $region_count,	$tag_start];
+# 	$curr_w->tagAdd($curr_w->_indenttag,	$tag_start);
+	push @tagAdds, [$curr_w->_indenttag,	$tag_start];
 	my $ww = $curr_w;
  	$curr_w->tagBind("plus" . $region_count,
  			 '<1>' => [$ww, 'ShowHideRegion', $region_count]);
