@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.37 2007/10/11 20:57:47 eserte Exp $
+# $Id: XMLViewer.pm,v 1.38 2007/10/11 20:59:47 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.18_91';
+$VERSION = '0.18_92';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $curr_xpath;
@@ -131,6 +131,7 @@ sub insertXML {
 	for (reverse @tagAdds) {
 	    $w->tagAdd(@$_);
 	}
+	@tagAdds = ();
     }
     $w->Unbusy();
 }
