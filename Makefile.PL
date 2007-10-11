@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'	=> 'Tk::XMLViewer',
     'VERSION_FROM' => 'XMLViewer.pm', # finds $VERSION
-    'PREREQ_PM' => {'Tk'          => 0,
+    'PREREQ_PM' => {'Tk'          => 800.013,
 	            'XML::Parser' => 0,
 		    ($] < 5.006 ? ('Unicode::String' => 0) : ()),
 	           },
