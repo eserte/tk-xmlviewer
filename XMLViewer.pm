@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.38 2007/10/11 20:59:47 eserte Exp $
+# $Id: XMLViewer.pm,v 1.39 2007/10/12 06:34:32 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
@@ -259,7 +259,8 @@ sub EndTag {
 	$curr_w->insert("end", "</" . _convert_from_unicode($_[1]) .">",
 			'xml_tag');
 # 	$curr_w->tagAdd($curr_w->_indenttag, $start, "end");
-	push @tagAdds, [$curr_w->_indenttag, $start, "end"];
+	my $end_index = $curr_w->index("end");
+	push @tagAdds, [$curr_w->_indenttag, $start, $end_index];
  	my $region_count = $curr_w->{RegionCount};
 # 	$curr_w->tagAdd("region" . $region_count,
 # 			$region_start, $region_end);
