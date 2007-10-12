@@ -20,7 +20,7 @@ WriteMakefile(
 sub MY::postamble {
     my $postamble = <<'EOF';
 demo :: pure_all
-	$(FULLPERL) -w -Mblib test.pl -demo
+	$(FULLPERL) -w -Mblib t/module.t -demo
 
 EOF
 
