@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.39 2007/10/12 06:34:32 eserte Exp $
+# $Id: XMLViewer.pm,v 1.40 2007/10/12 19:07:17 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
@@ -25,7 +25,7 @@ use XML::Parser;
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.18_92';
+$VERSION = '0.19';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $curr_xpath;
