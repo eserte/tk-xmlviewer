@@ -1,5 +1,8 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.19
+	- just made the changes in 0.18_xx official
+
 0.18_92
 	- fixed closing tag indentation (bug introduced in 0.18_91)
 	- fixed "make demo"
