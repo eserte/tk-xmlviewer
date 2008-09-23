@@ -3,7 +3,7 @@ use Tk::XMLViewer;
 use XML::Parser;
 use FindBin;
 use Getopt::Long;
-use Test::More tests => 16;
+use Test::More tests => 18;
 
 my $demo = 0;
 GetOptions("demo!" => \$demo) or die "usage!";
@@ -28,11 +28,13 @@ isa_ok($xmlwidget->Subwidget("scrolled"), "Tk::XMLViewer");
 $xmlwidget->tagConfigure('xml_comment', -foreground => "white",
 			 -background => "red", -font => "Helvetica 15");
 
-$xmlwidget->insertXML(-file => $file);
-$xmlwidget->XMLMenu;
+eval { $xmlwidget->insertXML(-file => $file) };
+is($@, '', "Inserted XML file '$file'");
+eval { $xmlwidget->XMLMenu };
+is($@, '', 'Created XMLMenu');
 
 my $xml_string1 = $xmlwidget->DumpXML;
-isnt($xml_string1, '');
+isnt($xml_string1, '', 'XML content dumped from widget');
 
 my $xmlwidget2 = $t2->XMLViewer->pack;
 isa_ok($xmlwidget2, 'Tk::XMLViewer');
