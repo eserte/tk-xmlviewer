@@ -1,5 +1,10 @@
 Revision history for Perl extension Tk::XMLViewer.
 
+0.20
+	- fix: XPath To Selection menu item seemed to work only once
+	- fix: XPath To Selection menu item works also from the norma
+	  menu, not only from the popup menu
+
 0.19
 	- just made the changes in 0.18_xx official
 
