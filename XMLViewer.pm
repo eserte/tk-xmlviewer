@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.40 2007/10/12 19:07:17 eserte Exp $
+# $Id: XMLViewer.pm,v 1.41 2008/12/02 22:39:28 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
@@ -23,9 +23,17 @@ use vars qw($VERSION);
 use base qw(Tk::Derived Tk::ROText);
 use XML::Parser;
 
+BEGIN {
+    if ($] < 5.006) {
+	$INC{"warnings.pm"} = 1;
+	*warnings::import = sub { };
+	*warnings::unimport = sub { };
+    }
+}
+
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.19';
+$VERSION = '0.20';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $curr_xpath;
@@ -453,18 +461,39 @@ sub XMLMenu {
 	}
 	$depthmenu->command(-label => "Open all",
 			    -command => sub { $w->ShowToDepth(undef) });
-	$xmlmenu->command(-label => "XPath to Selection",
-			  -command => sub { $w->XPathToSelection });
+	my $xpath_to_selection_menuitem = $xmlmenu->command(-label => "XPath to Selection",
+							    -command => sub { $w->XPathToSelection });
+	$w->{XPathToSelectionMenuItem} = $xpath_to_selection_menuitem;
 # XXX not yet:
 #	$xmlmenu->command(-label => "Close selected region",
 #			  -command => sub { $w->CloseSelectedRegion });
+
+	no warnings 'once';
+	*menu = sub {
+	    my $w = shift;
+	    my $menu = $w->SUPER::menu(@_);
+	    if ($menu->isa("Tk::Menu")) {
+		# Hack: rebless
+		bless $menu, 'Tk::XMLViewer::Menu';
+	    }
+	    $menu;
+	};
     }
 }
 
 sub XPathToSelection {
     my($w) = @_;
-    my($X,$Y) = @{$w->{PostPosition}};
-    my $xpath = $w->GetXPathFromXY($X, $Y);
+
+    my $xpath;
+    if ($w->{PostPosition}) {
+	# called from context menu
+	my($X,$Y) = @{$w->{PostPosition}};
+	$xpath = $w->GetXPathFromXY($X,$Y);
+	delete $w->{PostPosition};
+    } else {
+	# called from normal menu
+	$xpath = $w->GetXPathFromIndex('insert');
+    }
 
     # Define a dummy widget holding the selection, so we can still use
     # the Text selection after using XPathToSelection
@@ -474,6 +503,7 @@ sub XPathToSelection {
     }
 
     $dummy->SelectionOwn;
+    $dummy->SelectionHandle(''); # XXX why this seems to be necessary?
     $dummy->SelectionHandle
 	(sub {
 	     my($offset, $maxbytes) = @_;
@@ -496,7 +526,12 @@ sub BalloonInfo {
 
 sub GetXPathFromXY {
     my($w, $X, $Y) = @_;
-    for my $tag ($w->tagNames('@'.($X-$w->rootx).','.($Y-$w->rooty))) {
+    $w->GetXPathFromIndex('@'.($X-$w->rootx).','.($Y-$w->rooty));
+}
+
+sub GetXPathFromIndex {
+    my($w, $index) = @_;
+    for my $tag ($w->tagNames($index)) {
 	if ($tag =~ m{^xpath_(.*)$}) {
 	    my $xpath = $1;
 	    return $xpath;
@@ -584,6 +619,27 @@ sub Showinfo {
 }
 
 sub GetInfo { $_[0]->{XmlInfo} }
+
+package # XXX temporarily hide from PAUSE indexer
+    Tk::XMLViewer::Menu;
+use base qw(Tk::Menu);
+
+# Hackish: this is needed to clear the PostPosition member.
+# Unfortunately unpost is called *before* the actual XPathToSelection
+# callback is called, so in this case the PostPosition member has to
+# be kept and has to be deleted in the XPathToSelection callback.
+sub unpost {
+    my $menu = shift;
+    $menu->SUPER::unpost;
+    my $xmlviewer = $menu->parent;
+    return if !$xmlviewer->{XPathToSelectionMenuItem};
+    my $activelabel = $Tk::activeMenu->entrycget($Tk::activeItem, '-label');
+    if (defined $activelabel && $activelabel eq $xmlviewer->{XPathToSelectionMenuItem}->cget('-label')) {
+	# popup menu, keep PostPosition
+    } else {
+	delete $menu->parent->{PostPosition};
+    }
+}
 
 1;
 
@@ -705,14 +761,14 @@ Elements for DOCTYPE: Name Sysid Pubid Internal
 
 =head2 Unicode
 
+Perl/Tk 804 has Unicode support, so has C<Tk::XMLViewer>.
+
 Perl/Tk 800 does not support Unicode. In this case C<Tk::XMLViewer>
 tries to translate all characters returned by the XML parser to the
 C<iso-8859-1> charset. This may be done with a builtin function like
 C<pack>/C<unpack> or a CPAN module like L<Unicode::String>. If no
-fallback could be found, then unicode characters show as binary
+fallback could be found, then Unicode characters show as binary
 values.
-
-Perl/Tk 804 has Unicode support.
 
 =head1 BUGS
 
@@ -724,11 +780,13 @@ Perl/Tk anyway).
 
 Viewing of large XML files is slow.
 
-head1 TODO
+=head1 TODO
 
  - show to depth n: close everything from depth n+1
  - create menu item "close selected region"
  - DTD validation (is this possible with XML::Parser?)
+ - use alternative XML parser i.e. XML::LibXML::Reader (maybe this
+   would be faster?)
 
 =head1 AUTHOR
 
