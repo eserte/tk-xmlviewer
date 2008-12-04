@@ -3,7 +3,7 @@ use Tk::XMLViewer;
 use XML::Parser;
 use FindBin;
 use Getopt::Long;
-use Test::More tests => 18;
+use Test::More;
 
 my $demo = 0;
 GetOptions("demo!" => \$demo) or die "usage!";
@@ -15,7 +15,15 @@ if ($use_unicode) {
     $file = "$FindBin::RealBin/test.xml";
 }
 
-$top = new MainWindow;
+$top = eval { new MainWindow };
+
+if (!$top) {
+    plan skip_all => $@;
+    exit 0;
+}
+
+plan tests => 18;
+
 $t2 = $top->Toplevel;
 $t2->withdraw;
 

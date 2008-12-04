@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: script.t,v 1.3 2006/09/01 20:10:20 eserte Exp $
+# $Id: script.t,v 1.4 2008/12/04 18:43:17 eserte Exp $
 # Author: Slaven Rezic
 #
 
@@ -38,6 +38,16 @@ my @opt = ([],
 	   ['-loaddtd'],
 	   ['-showxpath'],
 	  );
+
+{
+    use Tk;
+    my $top = eval { new MainWindow };
+    if (!$top) {
+	plan skip_all => $@;
+	exit;
+    }
+    $top->destroy;
+}
 
 plan tests => scalar @opt;
 
