@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: XMLViewer.pm,v 1.41 2008/12/02 22:39:28 eserte Exp $
+# $Id: XMLViewer.pm,v 1.42 2009/11/10 18:47:50 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
@@ -56,7 +56,7 @@ sub Populate {
     my $tagcolor     = delete $args->{-tagcolor}     || 'red';
     my $attrkeycolor = delete $args->{-attrkeycolor} || 'green4';
     my $attrvalcolor = delete $args->{-attrvalcolor} || 'DarkGreen';
-    my $commentcolor = delete $args->{-commentcolor} || 'gold2';
+    my $commentcolor = delete $args->{-commentcolor} || 'gold3';
 
     $w->tagConfigure('xml_tag',
 		     -foreground => $tagcolor,
