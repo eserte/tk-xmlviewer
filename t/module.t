@@ -1,3 +1,4 @@
+use strict;
 use Tk;
 use Tk::XMLViewer;
 use XML::Parser;
@@ -9,13 +10,14 @@ my $demo = 0;
 GetOptions("demo!" => \$demo) or die "usage!";
 
 my $use_unicode = ($Tk::VERSION >= 803); # unicode enabled
+my $file;
 if ($use_unicode) {
     $file = "$FindBin::RealBin/testutf8.xml";
 } else {
     $file = "$FindBin::RealBin/test.xml";
 }
 
-$top = eval { new MainWindow };
+my $top = eval { new MainWindow };
 
 if (!$top) {
     plan skip_all => $@;
@@ -24,12 +26,12 @@ if (!$top) {
 
 plan tests => 18;
 
-$t2 = $top->Toplevel;
+my $t2 = $top->Toplevel;
 $t2->withdraw;
 
-$xmlwidget = $top->Scrolled('XMLViewer',
-			    -tagcolor => 'blue',
-			    -scrollbars => "osoe")->pack;
+my $xmlwidget = $top->Scrolled('XMLViewer',
+			       -tagcolor => 'blue',
+			       -scrollbars => "osoe")->pack;
 ok($xmlwidget, "Got a widget");
 isa_ok($xmlwidget->Subwidget("scrolled"), "Tk::XMLViewer");
 
@@ -89,8 +91,8 @@ $top->bind("<P>" => sub {
     require "$perldir/ptksh";
 });
 
-$depth=10;
-$f=$top->Frame->pack;
+my $depth=10;
+my $f=$top->Frame->pack;
 $f->Label(-text => "Depth",
 	 #  -command => sub {
 	 #      $xmlwidget->ShowToDepth($depth);
@@ -107,12 +109,13 @@ $f->Button(-text => "Dump Tk::Text as XML",
 	   -command => sub {
 	       my $s = $xmlwidget->DumpXML;
 	       #warn $s;
-	       $t = $top->Toplevel;
-	       $xmlwidget2 = $t->Scrolled('XMLViewer',
-					  -scrollbars => "osoe")->pack;
+	       my $t = $top->Toplevel;
+	       my $xmlwidget2 = $t->Scrolled('XMLViewer',
+					     -scrollbars => "osoe")->pack;
 	       $xmlwidget2->insertXML(-text => $s);
 	       $xmlwidget2->XMLMenu;
 	   })->pack(-side => "left");
+my $not;
 my $okb = $f->Button(-text => "OK",
 		     -command => sub { $not = ""; })->pack(-side => "left");
 $okb->focus;
