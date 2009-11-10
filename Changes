@@ -1,11 +1,12 @@
 Revision history for Perl extension Tk::XMLViewer.
 
-XXX
+0.21
 	- default comment color is now a little bit darker
+	- tests check for existing DISPLAY
 
 0.20
 	- fix: XPath To Selection menu item seemed to work only once
-	- fix: XPath To Selection menu item works also from the norma
+	- fix: XPath To Selection menu item works also from the normal
 	  menu, not only from the popup menu
 
 0.19

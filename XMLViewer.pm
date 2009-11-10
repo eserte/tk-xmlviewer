@@ -4,7 +4,7 @@
 # $Id: XMLViewer.pm,v 1.42 2009/11/10 18:47:50 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright © 2000, 2003, 2004, 2007 Slaven Rezic. All rights reserved.
+# Copyright © 2000, 2003, 2004, 2007, 2009 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -33,7 +33,7 @@ BEGIN {
 
 Construct Tk::Widget 'XMLViewer';
 
-$VERSION = '0.20';
+$VERSION = '0.21';
 
 my($curr_w); # ugly, but probably faster than defining handlers for everything
 my $curr_xpath;
