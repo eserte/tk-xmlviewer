@@ -26,7 +26,10 @@ if (!$top) {
 
 plan tests => 18;
 
+$top->geometry('+10+10');
+
 my $t2 = $top->Toplevel;
+$t2->geometry('+10+10');
 $t2->withdraw;
 
 my $xmlwidget = $top->Scrolled('XMLViewer',
@@ -110,6 +113,7 @@ $f->Button(-text => "Dump Tk::Text as XML",
 	       my $s = $xmlwidget->DumpXML;
 	       #warn $s;
 	       my $t = $top->Toplevel;
+	       $t->geometry('+10+10');
 	       my $xmlwidget2 = $t->Scrolled('XMLViewer',
 					     -scrollbars => "osoe")->pack;
 	       $xmlwidget2->insertXML(-text => $s);
